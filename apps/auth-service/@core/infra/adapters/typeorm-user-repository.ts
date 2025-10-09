@@ -61,15 +61,18 @@ export class TypeOrmUserRepository extends UserRepository {
 
   private userToDomain(user: TypeOrmUser | null): DomainUser | null {
     if (!user) return null;
+
     const { id, name, email, password, createdAt, updatedAt } = user;
 
-    return DomainUser.create({
-      id: UniqueId.create(id),
-      name,
-      email,
-      password,
-      createdAt,
-      updatedAt,
-    });
+    return DomainUser.create(
+      {
+        name,
+        email,
+        password,
+        createdAt,
+        updatedAt,
+      },
+      new UniqueId(id),
+    );
   }
 }
