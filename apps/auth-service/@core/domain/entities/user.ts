@@ -34,14 +34,6 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.password;
   }
 
-  get createdAt(): Date {
-    return this.props.createdAt!;
-  }
-
-  get updatedAt(): Date | undefined {
-    return this.props.updatedAt;
-  }
-
   protected validate(): void {
     StringValidator.isEmailOrThrows('email', this.props.email);
     StringValidator.isNotEmptyOrThrows('name', this.props.name);
