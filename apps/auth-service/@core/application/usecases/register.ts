@@ -42,6 +42,7 @@ export class RegisterUseCase {
       id: user.id.toString(),
       name: user.name,
       email: user.email,
+      createdAt: user.createdAt,
     });
 
     return user;
