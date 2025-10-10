@@ -9,6 +9,7 @@ import {
   RegisterUseCase,
 } from '@core/application/usecases';
 import { AuthToken } from '@core/application/ports/auth-token';
+import { EventPublisher } from '@core/application/ports/event-publisher';
 
 @Module({
   imports: [AdaptersModule, DatabaseModule],
@@ -26,10 +27,14 @@ import { AuthToken } from '@core/application/ports/auth-token';
     },
     {
       provide: RegisterUseCase,
-      useFactory: (repository: UserRepository, encrypter: Encrypter) => {
-        return new RegisterUseCase(repository, encrypter);
+      useFactory: (
+        repository: UserRepository,
+        encrypter: Encrypter,
+        eventPublisher: EventPublisher,
+      ) => {
+        return new RegisterUseCase(repository, encrypter, eventPublisher);
       },
-      inject: [UserRepository, Encrypter],
+      inject: [UserRepository, Encrypter, EventPublisher],
     },
     {
       provide: RefreshTokenUseCase,

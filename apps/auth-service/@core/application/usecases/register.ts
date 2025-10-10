@@ -3,6 +3,7 @@ import { Encrypter } from '../ports/encrypter';
 import { ConflictException } from '@nestjs/common';
 import { User } from '@core/domain/entities/user';
 import { StringValidator } from '@core/domain/validators/strings-validator';
+import { EventPublisher } from '../ports/event-publisher';
 
 export interface RegisterProps {
   email: string;
@@ -14,6 +15,7 @@ export class RegisterUseCase {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly encrypter: Encrypter,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute({ email, name, password }: RegisterProps): Promise<User> {
@@ -35,6 +37,12 @@ export class RegisterUseCase {
     });
 
     await this.userRepository.save(user);
+
+    await this.eventPublisher.emit('user.created', {
+      id: user.id.toString(),
+      name: user.name,
+      email: user.email,
+    });
 
     return user;
   }

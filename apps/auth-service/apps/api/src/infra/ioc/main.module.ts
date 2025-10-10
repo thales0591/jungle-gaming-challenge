@@ -4,6 +4,7 @@ import { DatabaseModule } from './database/database.module';
 import { envSchema } from './env/env';
 import { MiddlewareModule } from '../middlewares/middlewate.module';
 import { AuthModule } from '../modules/auth/auth.module';
+import { RmqModule } from '../messaging/rmq.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { AuthModule } from '../modules/auth/auth.module';
     }),
     DatabaseModule,
     MiddlewareModule,
-    AuthModule
+    AuthModule,
+    RmqModule,
   ],
 })
 export class MainModule {}
