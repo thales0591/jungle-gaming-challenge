@@ -9,12 +9,12 @@ export class RmqService {
   ) {}
 
   async emit(pattern: string, payload: any) {
-    console.log('no emit');
     await this.client.connect();
     return this.client.emit(pattern, payload);
   }
 
   async send<TResult, TInput>(pattern: string, data: TInput) {
+    await this.client.connect();
     return this.client.send<TResult, TInput>(pattern, data);
   }
 }
