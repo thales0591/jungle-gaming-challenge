@@ -1,0 +1,32 @@
+services:
+  database:
+    container_name: task-service-db
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/Recife
+    ports:
+      - ${DB_PORT}:5432
+    volumes:
+      - /usr/share/zoneinfo/America/Recife:/etc/localtime:ro
+      - task-dbdata:/var/lib/postgresql/data
+    restart: 'unless-stopped'
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_LISTEN_PORT: 5051
+    ports:
+      - '5051:5051'
+    volumes:
+      - task-pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
+
+volumes:
+  task-dbdata:
+    name: task-service-db-data
+  task-pgadmin-data:
