@@ -5,14 +5,11 @@ import {
   IsString,
   IsUUID,
   IsArray,
+  ArrayMinSize,
 } from 'class-validator';
 import { TaskPriority, TaskStatus } from '@core/domain/entities/task';
 
 export class CreateTaskRequest {
-  @IsUUID()
-  @IsNotEmpty()
-  authorId: string;
-
   @IsNotEmpty()
   @IsString()
   title: string;
@@ -33,6 +30,7 @@ export class CreateTaskRequest {
   status: TaskStatus;
 
   @IsArray()
+  @ArrayMinSize(1)
   @IsUUID('all', { each: true })
   assignedUserIds: string[];
 }

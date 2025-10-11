@@ -17,6 +17,7 @@ export class TypeOrmTaskRepository extends TaskRepository {
   async create(task: Task): Promise<void> {
     await this.repository.insert({
       id: task.id.value,
+      authorId: task.authorId.toString(),
       title: task.title,
       description: task.description,
       dueDate: task.dueDate,

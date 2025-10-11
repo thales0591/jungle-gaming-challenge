@@ -20,6 +20,7 @@ import { TaskResponse } from './dtos/task.response';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { GetPaginatedTasksQuery } from './dtos/get-paginated-tasks.request';
 import { UpdateTaskRequest } from './dtos/update-task.request';
+import { LoggedUserId } from '../../decorators/logged-user.decorator';
 
 @Controller('task')
 export class TaskController {
@@ -33,10 +34,10 @@ export class TaskController {
 
   @Post()
   async create(
+    @LoggedUserId() userId: string,
     @Body()
     {
       assignedUserIds,
-      authorId,
       description,
       priority,
       status,
@@ -45,7 +46,7 @@ export class TaskController {
     }: CreateTaskRequest,
   ): Promise<TaskResponse> {
     const task = await this.createTaskUseCase.execute({
-      authorId: UniqueId.create(authorId),
+      authorId: UniqueId.create(userId),
       assignedUserIds: assignedUserIds.map((id) => UniqueId.create(id)),
       title,
       description,

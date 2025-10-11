@@ -34,6 +34,13 @@ export class CreateTaskUseCase {
       throw new NotFoundException('User not found');
     }
 
+    const foundUsers =
+      await this.userReadModelRepository.findManyByIds(assignedUserIds);
+
+    if (foundUsers.length !== assignedUserIds.length) {
+      throw new NotFoundException('Some assigned users do not exist');
+    }
+
     const task = Task.create({
       title,
       description,
@@ -44,7 +51,7 @@ export class CreateTaskUseCase {
       authorId,
     });
 
-    await this.taskRepository.save(task);
+    await this.taskRepository.create(task);
 
     return task;
   }

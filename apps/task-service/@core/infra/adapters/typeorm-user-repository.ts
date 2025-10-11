@@ -1,4 +1,4 @@
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserReadModel } from '@core/domain/entities/user-read-model';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { UserReadModelRepository } from '@core/domain/ports';
@@ -27,15 +27,22 @@ export class TypeOrmUserReadModelRepository extends UserReadModelRepository {
     });
   }
 
+  async findManyByIds(ids: UniqueId[]): Promise<UserReadModel[]> {
+    if (!ids.length) return [];
+
+    const stringIds = ids.map((id) => id.value);
+
+    const entities = await this.repository.find({
+      where: { id: In(stringIds) },
+    });
+
+    return entities.map((entity) => this.toDomain(entity)!);
+  }
+
   private toDomain(user: UserReadModelEntity | null): UserReadModel | null {
     if (!user) return null;
     const { id, email, username, createdAt } = user;
 
-    return new UserReadModel(
-      new UniqueId(id),
-      email,
-      username,
-      createdAt,
-    );
+    return new UserReadModel(new UniqueId(id), email, username, createdAt);
   }
 }
