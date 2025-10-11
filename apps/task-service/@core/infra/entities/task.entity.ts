@@ -5,7 +5,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
+import { TaskCommentEntity } from './task-comment.entity';
 
 @Entity('tasks')
 export class TaskEntity {
@@ -53,4 +55,9 @@ export class TaskEntity {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
+
+  @OneToMany(() => TaskCommentEntity, (comment) => comment.task, {
+    cascade: true,
+  })
+  comments?: TaskCommentEntity[];
 }

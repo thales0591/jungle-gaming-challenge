@@ -1,2 +1,2 @@
 export * from './task-repository';
-export * from './user-read-model'
+export * from './user-read-model-repository'

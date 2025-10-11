@@ -2,7 +2,7 @@ import { DEFAULT_PAGE, DEFAULT_SIZE } from '@core/application/constants';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min } from 'class-validator';
 
-export class GetPaginatedTasksQuery {
+export class GetPaginatedTaskCommentsQuery {
   @IsOptional()
   @Type(() => Number)
   @IsInt()

@@ -5,6 +5,7 @@ import { envSchema } from './env/env';
 import { MiddlewareModule } from '../middlewares/middlewate.module';
 import { TaskModule } from '../modules/task/task.module';
 import { UserListenerModule } from '../modules/user-listener/user-listener.module';
+import { TaskCommentModule } from '../modules/task-comment/task-comment.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserListenerModule } from '../modules/user-listener/user-listener.modul
     DatabaseModule,
     MiddlewareModule,
     TaskModule,
+    TaskCommentModule,
     UserListenerModule,
   ],
 })

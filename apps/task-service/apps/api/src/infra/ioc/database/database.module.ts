@@ -4,6 +4,8 @@ import { TypeOrmService } from './typeorm.service';
 import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { TypeOrmUserReadModelRepository } from '@core/infra/adapters/typeorm-user-repository';
 import { TypeOrmTaskRepository } from '@core/infra/adapters/typeorm-task-repository';
+import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
+import { TypeOrmTaskCommentsRepository } from '@core/infra/adapters/typeorm-task-comments-repository';
 
 @Module({
   providers: [
@@ -25,7 +27,14 @@ import { TypeOrmTaskRepository } from '@core/infra/adapters/typeorm-task-reposit
       },
       inject: [ITypeOrm],
     },
+    {
+      provide: TaskCommentRepository,
+      useFactory: (orm: ITypeOrm) => {
+        return new TypeOrmTaskCommentsRepository(orm);
+      },
+      inject: [ITypeOrm],
+    },    
   ],
-  exports: [TaskRepository, UserReadModelRepository, ITypeOrm],
+  exports: [TaskRepository, UserReadModelRepository, TaskCommentRepository, ITypeOrm],
 })
 export class DatabaseModule {}

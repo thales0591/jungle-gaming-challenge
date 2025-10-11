@@ -21,7 +21,7 @@ import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { GetPaginatedTasksQuery } from './dtos/get-paginated-tasks.request';
 import { UpdateTaskRequest } from './dtos/update-task.request';
 
-@Controller('auth')
+@Controller('task')
 export class TaskController {
   constructor(
     private readonly createTaskUseCase: CreateTaskUseCase,
