@@ -10,6 +10,9 @@ import {
 } from '@core/application/usecases';
 import { AuthToken } from '@core/application/ports/auth-token';
 import { EventPublisher } from '@core/application/ports/event-publisher';
+import { GetMeUseCase } from '@core/application/usecases/get-me';
+import { VerifyTokenUseCase } from '@core/application/usecases/verify';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [AdaptersModule, DatabaseModule],
@@ -43,7 +46,32 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
       },
       inject: [UserRepository, AuthToken],
     },
+    {
+      provide: GetMeUseCase,
+      useFactory: (repository: UserRepository) => {
+        return new GetMeUseCase(repository);
+      },
+      inject: [UserRepository],
+    },
+    {
+      provide: VerifyTokenUseCase,
+      useFactory: (
+        tokenManager: AuthToken,
+        repository: UserRepository,
+        configService: ConfigService,
+      ) => {
+        const authSecret = configService.getOrThrow<string>('AUTH_SECRET');
+        return new VerifyTokenUseCase(tokenManager, repository, authSecret);
+      },
+      inject: [AuthToken, UserRepository, ConfigService],
+    },
   ],
-  exports: [LoginUseCase, RegisterUseCase, RefreshTokenUseCase],
+  exports: [
+    LoginUseCase,
+    RegisterUseCase,
+    RefreshTokenUseCase,
+    GetMeUseCase,
+    VerifyTokenUseCase,
+  ],
 })
 export class UseCasesModule {}

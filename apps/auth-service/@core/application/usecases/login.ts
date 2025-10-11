@@ -4,6 +4,7 @@ import { NotFoundException } from '@core/domain/exceptions/not-found-exception';
 import { AuthToken } from '../ports/auth-token';
 import { Environment } from '../environment';
 import { UnauthorizedException } from '@core/domain/exceptions/unauthorized-exception';
+import { UserPayload } from '../auth/user.payload';
 
 export interface LoginProps {
   email: string;
@@ -41,14 +42,14 @@ export class LoginUseCase {
       throw new UnauthorizedException('');
     }
 
-    const accessToken = await this.tokenManager.generate({
-      payload: { userId: user.id },
+    const accessToken = await this.tokenManager.generate<UserPayload>({
+      payload: { userId: user.id.value },
       secret: Environment.auth.secret,
       expiresAt: this.getSessionExpiration(),
     });
 
-    const refreshToken = await this.tokenManager.generate({
-      payload: { userId: user.id },
+    const refreshToken = await this.tokenManager.generate<UserPayload>({
+      payload: { userId: user.id.value },
       secret: Environment.auth.refreshSecret,
       expiresAt: this.getRefreshSessionExpiration(),
     });
