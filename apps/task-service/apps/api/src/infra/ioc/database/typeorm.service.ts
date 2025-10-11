@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm';
 import { ITypeOrm } from '@core/infra/typeorm-client';
 import { UserReadModelEntity } from '../../../../../../@core/infra/entities/user-read-model.entity';
 import { TaskEntity } from '../../../../../../@core/infra/entities/task.entity';
+import { TaskCommentEntity } from '../../../../../../@core/infra/entities/task-comment.entity';
 
 @Injectable()
 export class TypeOrmService extends ITypeOrm {
@@ -20,7 +21,7 @@ export class TypeOrmService extends ITypeOrm {
       password: config.getOrThrow('POSTGRES_PASSWORD'),
       database: config.getOrThrow('POSTGRES_DB'),
       synchronize: false,
-      entities: [UserReadModelEntity, TaskEntity],
+      entities: [UserReadModelEntity, TaskEntity, TaskCommentEntity],
     });
   }
 
