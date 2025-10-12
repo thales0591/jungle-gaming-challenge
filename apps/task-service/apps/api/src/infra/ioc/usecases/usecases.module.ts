@@ -11,19 +11,22 @@ import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
 import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
+import { MessagingModule } from '../../messaging/messaging.module';
+import { EventPublisher } from '@core/application/ports/event-publisher';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, MessagingModule],
   providers: [
     {
       provide: CreateTaskUseCase,
       useFactory: (
         taskRepository: TaskRepository,
         userReadModelRepository: UserReadModelRepository,
+        eventPublisher: EventPublisher,
       ) => {
-        return new CreateTaskUseCase(taskRepository, userReadModelRepository);
+        return new CreateTaskUseCase(taskRepository, userReadModelRepository, eventPublisher);
       },
-      inject: [TaskRepository, UserReadModelRepository],
+      inject: [TaskRepository, UserReadModelRepository, EventPublisher],
     },
     {
       provide: DeleteTaskUseCase,
@@ -48,17 +51,10 @@ import { TaskCommentRepository } from '@core/domain/ports/task-comments-reposito
     },
     {
       provide: UpdateTaskUseCase,
-      useFactory: (taskRepository: TaskRepository) => {
-        return new UpdateTaskUseCase(taskRepository);
+      useFactory: (taskRepository: TaskRepository, eventPublisher: EventPublisher) => {
+        return new UpdateTaskUseCase(taskRepository, eventPublisher);
       },
-      inject: [TaskRepository, UserReadModelRepository],
-    },
-    {
-      provide: UpdateTaskUseCase,
-      useFactory: (taskRepository: TaskRepository) => {
-        return new UpdateTaskUseCase(taskRepository);
-      },
-      inject: [TaskRepository, UserReadModelRepository],
+      inject: [TaskRepository, EventPublisher],
     },
     {
       provide: GetPaginatedTaskCommentsUseCase,
@@ -73,14 +69,16 @@ import { TaskCommentRepository } from '@core/domain/ports/task-comments-reposito
         taskCommentRepository: TaskCommentRepository,
         userReadModelRepository: UserReadModelRepository,
         taskRepository: TaskRepository,
+        eventPublisher: EventPublisher,
       ) => {
         return new CreateTaskCommentUseCase(
           taskCommentRepository,
           userReadModelRepository,
           taskRepository,
+          eventPublisher,
         );
       },
-      inject: [TaskCommentRepository, UserReadModelRepository, TaskRepository],
+      inject: [TaskCommentRepository, UserReadModelRepository, TaskRepository, EventPublisher],
     },
   ],
   exports: [

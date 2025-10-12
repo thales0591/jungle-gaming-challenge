@@ -2,6 +2,7 @@ import { Task, TaskPriority, TaskStatus } from '@core/domain/entities/task';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { NotFoundException } from '@nestjs/common';
+import { EventPublisher } from '../ports/event-publisher';
 
 export interface CreateTaskProps {
   authorId: UniqueId;
@@ -17,6 +18,7 @@ export class CreateTaskUseCase {
   constructor(
     private readonly taskRepository: TaskRepository,
     private readonly userReadModelRepository: UserReadModelRepository,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute({
@@ -52,6 +54,18 @@ export class CreateTaskUseCase {
     });
 
     await this.taskRepository.create(task);
+
+    await this.eventPublisher.emit('task.created', {
+      id: task.id.toString(),
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      authorId: task.authorId.toString(),
+      assignedUserIds: task.assignedUserIds.map(id => id.toString()),
+      createdAt: task.createdAt,
+    });
 
     return task;
   }

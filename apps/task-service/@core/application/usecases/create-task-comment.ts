@@ -3,6 +3,7 @@ import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { NotFoundException } from '@nestjs/common';
 import { TaskComment } from '@core/domain/entities/task-comment';
 import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
+import { EventPublisher } from '../ports/event-publisher';
 
 export interface CreateTaskCommentProps {
   taskId: UniqueId;
@@ -15,6 +16,7 @@ export class CreateTaskCommentUseCase {
     private readonly taskCommentRepository: TaskCommentRepository,
     private readonly userReadModelRepository: UserReadModelRepository,
     private readonly taskRepository: TaskRepository,
+    private readonly eventPublisher: EventPublisher,
   ) {}
 
   async execute({
@@ -41,6 +43,16 @@ export class CreateTaskCommentUseCase {
     });
 
     await this.taskCommentRepository.create(taskComment);
+
+    await this.eventPublisher.emit('comment.new', {
+      id: taskComment.id.toString(),
+      taskId: taskComment.taskId.toString(),
+      authorId: taskComment.authorId.toString(),
+      content: taskComment.content,
+      createdAt: taskComment.createdAt,
+      taskAuthorId: task.authorId.toString(),
+      taskAssignedUserIds: task.assignedUserIds.map(id => id.toString()),
+    });
 
     return taskComment;
   }

@@ -3,6 +3,7 @@ import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { NotFoundException } from '@core/domain/exceptions/not-found-exception';
 import { TaskRepository } from '@core/domain/ports/task-repository';
 import { TaskPriority, TaskStatus } from '@core/domain/entities/task';
+import { EventPublisher } from '../ports/event-publisher';
 
 export interface UpdateTaskProps {
   id: UniqueId;
@@ -16,7 +17,10 @@ export interface UpdateTaskProps {
 }
 
 export class UpdateTaskUseCase {
-  constructor(private readonly taskRepository: TaskRepository) {}
+  constructor(
+    private readonly taskRepository: TaskRepository,
+    private readonly eventPublisher: EventPublisher,
+  ) {}
 
   async execute({
     id,
@@ -42,6 +46,19 @@ export class UpdateTaskUseCase {
     });
 
     await this.taskRepository.update(task);
+
+    await this.eventPublisher.emit('task.updated', {
+      id: task.id.toString(),
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      authorId: task.authorId.toString(),
+      assignedUserIds: task.assignedUserIds.map(id => id.toString()),
+      updatedAt: task.updatedAt,
+    });
+
     return task;
   }
 }
