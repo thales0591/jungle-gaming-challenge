@@ -22,7 +22,7 @@ export class TaskEntity {
   @Column()
   title: string;
 
-  @Column({ unique: true })
+  @Column()
   description: string;
 
   @Column({ name: 'due_date', type: 'timestamp', nullable: true })
