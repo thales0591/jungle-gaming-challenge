@@ -9,12 +9,13 @@ import { TaskModal } from "@/components/tasks/task-modal"
 import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 import type { Task } from "@/types"
+import { useQuery } from "@tanstack/react-query";
+import { fetchTasksRequest } from "@/services/tasks";
 
 export const Route = createFileRoute("/tasks")({
   component: TasksPage,
 });
 
-// Mock data for demonstration
 const mockTasks: Task[] = [
   {
     id: "1",
@@ -111,6 +112,14 @@ function TasksPage() {
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
 
+  const { data: tasksData } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => fetchTasksRequest({
+      page: 1,
+      size: 20
+    }),
+  })
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate({ to: "/" })
@@ -122,50 +131,6 @@ function TasksPage() {
       setIsLoading(false)
     }, 1000)
   }, [isAuthenticated, navigate])
-
-  const filteredAndSortedTasks = useMemo(() => {
-    let filtered = [...tasks]
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (task) =>
-          task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          task.description?.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
-    }
-
-    // Status filter
-    if (statusFilter !== "ALL") {
-      filtered = filtered.filter((task) => task.status === statusFilter)
-    }
-
-    // Priority filter
-    if (priorityFilter !== "ALL") {
-      filtered = filtered.filter((task) => task.priority === priorityFilter)
-    }
-
-    // Sorting
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "recent":
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        case "dueDate":
-          if (!a.dueDate) return 1
-          if (!b.dueDate) return -1
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
-        case "priority":
-          const priorityOrder = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 }
-          return priorityOrder[a.priority] - priorityOrder[b.priority]
-        default:
-          return 0
-      }
-    })
-
-    return filtered
-  }, [tasks, searchQuery, statusFilter, priorityFilter, sortBy])
 
   const handleClearFilters = () => {
     setStatusFilter("ALL")
@@ -187,6 +152,8 @@ function TasksPage() {
   if (!isAuthenticated) {
     return null
   }
+
+  console.log('data: ', tasksData)
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,7 +184,7 @@ function TasksPage() {
                 <TaskSkeleton key={i} />
               ))}
             </div>
-          ) : filteredAndSortedTasks.length === 0 ? (
+          ) : tasksData?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhuma tarefa encontrada</h3>
@@ -231,12 +198,12 @@ function TasksPage() {
           ) : (
             <>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {filteredAndSortedTasks.map((task) => (
+                {tasksData?.map((task) => (
                   <TaskCard
                     key={task.id}
                     task={task}
                     onClick={() => navigate({ to: `/tasks/$id`, params: { id: task.id } })}
-                    onEdit={() => handleEditTask(task)}
+                    //onEdit={() => handleEditTask(task)}
                     onDelete={() => console.log("Delete", task.id)}
                   />
                 ))}
@@ -244,7 +211,7 @@ function TasksPage() {
 
               <div className="flex items-center justify-center pt-4">
                 <p className="text-sm text-muted-foreground">
-                  Mostrando {filteredAndSortedTasks.length} de {tasks.length} tarefas
+                  Mostrando {tasksData?.length} de {tasks.length} tarefas
                 </p>
               </div>
             </>

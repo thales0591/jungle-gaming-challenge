@@ -98,16 +98,16 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   });
 
   const onLoginSubmit = async (data: LoginFormData) => {
-    const { accessToken } = await loginMutation.mutateAsync(data);
+    const { accessToken, refreshToken } = await loginMutation.mutateAsync(data);
     const user = await verifyTokenRequest({ token: accessToken });
-    login(user, accessToken);
+    login(user, accessToken, refreshToken);
     onOpenChange(false);
   };
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
       const user = await registerMutation.mutateAsync(data);
-      const { accessToken } = await loginMutation.mutateAsync(data);
-      login(user, accessToken);
+      const { accessToken, refreshToken } = await loginMutation.mutateAsync(data);
+      login(user, accessToken, refreshToken);
       toast({
         title: "Conta criada com sucesso!",
         description: "Você já pode começar a usar o sistema.",

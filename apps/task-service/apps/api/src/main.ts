@@ -23,7 +23,6 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  app.setGlobalPrefix('api');
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

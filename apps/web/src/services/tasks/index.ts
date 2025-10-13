@@ -2,6 +2,8 @@ import type {
   CreateTaskRequest,
   Task,
   FetchTasksRequestData,
+  TaskComment,
+  RichTask,
 } from "./interface";
 import api from "../api";
 
@@ -15,14 +17,14 @@ export const createTaskRequest = async (
 export const createTaskCommentRequest = async (
   taskId: string,
   content: string
-): Promise<Task> => {
+): Promise<TaskComment> => {
   const { data } = await api.post(`/task/${taskId}/comments`, content);
   return data;
 };
 
 export const fetchTasksRequest = async (
   requestData: FetchTasksRequestData
-): Promise<Task[]> => {
+): Promise<RichTask[]> => {
   const { data } = await api.get(
     `/task?page=${requestData.page}&size=${requestData.size}`
   );

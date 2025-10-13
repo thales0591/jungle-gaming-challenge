@@ -1,16 +1,16 @@
-import type { Task } from "@/types"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Calendar, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import type { RichTask } from "@/services/tasks/interface"
 
 interface TaskCardProps {
-  task: Task
+  task: RichTask
   onClick?: () => void
   onEdit?: () => void
   onDelete?: () => void
@@ -108,15 +108,14 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
           )}
           <div className="flex items-center gap-1">
             <MessageSquare className="h-4 w-4" />
-            <span>{task.commentCount}</span>
+            <span>10</span>
           </div>
         </div>
 
         <div className="flex items-center -space-x-2">
           {task.assignedUsers.slice(0, 3).map((user) => (
             <Avatar key={user.id} className="h-7 w-7 border-2 border-background">
-              <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.username} />
-              <AvatarFallback className="text-xs">{user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-xs">{user.name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           ))}
           {task.assignedUsers.length > 3 && (

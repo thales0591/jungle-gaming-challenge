@@ -1,8 +1,27 @@
+export interface UserReadModel {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface RichTask {
+  id: string;
+  title: string;
+  description: string;
+  dueDate: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  assignedUsers: UserReadModel[];
+  author: UserReadModel;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Task {
   id: string;
   title: string;
   description: string;
-  dueDate: Date | null;
+  dueDate: string;
   priority: TaskPriority;
   status: TaskStatus;
   assignedUserIds: string[];
@@ -24,6 +43,15 @@ export interface CreateTaskRequest {
 }
 
 export interface FetchTasksRequestData {
-  size: number,
-  page: number
+  size: number;
+  page: number;
+}
+
+export interface TaskComment {
+  id: string;
+  taskId: string;
+  authorId: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
