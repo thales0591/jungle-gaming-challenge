@@ -30,7 +30,7 @@ export class LoginUseCase {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new UnauthorizedException('');
     }
 
     const passwordMatches = await this.encrypter.compare(
