@@ -36,7 +36,7 @@ export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 export interface CreateTaskRequest {
   title: string;
   description: string;
-  dueDate: string;
+  dueDate?: string | null;
   priority: TaskPriority;
   status: TaskStatus;
   assignedUserIds: string[];
@@ -54,4 +54,14 @@ export interface TaskComment {
   content: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Notification {
+  id: string;
+  type: "task_created" | "task_updated" | "comment_new" | "task_assigned";
+  title: string;
+  message: string;
+  taskId?: string;
+  read: boolean;
+  createdAt: string;
 }

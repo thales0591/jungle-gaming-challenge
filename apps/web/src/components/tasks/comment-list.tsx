@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -12,11 +12,18 @@ import { commentSchema, type CommentFormData } from "@/lib/validations"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { Loader2, Send } from "lucide-react"
-import type { Comment } from "@/types"
+import type { TaskComment } from "@/services/tasks/interface"
+
+// Temporary mock user data - TODO: Fetch user data from API
+const mockUsers: Record<string, { name: string; email: string }> = {
+  "1": { name: "João Silva", email: "joao@example.com" },
+  "2": { name: "Maria Santos", email: "maria@example.com" },
+  "3": { name: "Pedro Costa", email: "pedro@example.com" },
+}
 
 interface CommentListProps {
   taskId: string
-  comments: Comment[]
+  comments: TaskComment[]
   isLoading?: boolean
   onAddComment?: (content: string) => Promise<void>
 }
@@ -88,25 +95,27 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
               <p>Nenhum comentário ainda. Seja o primeiro a comentar!</p>
             </div>
           ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className="flex gap-3 group">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={comment.user.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{comment.user.username.slice(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-sm">{comment.user.username}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(comment.createdAt), "dd MMM 'às' HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+            comments.map((comment) => {
+              const author = mockUsers[comment.authorId] || { name: "Usuário Desconhecido", email: "" }
+              return (
+                <div key={comment.id} className="flex gap-3 group">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-sm">{author.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {format(new Date(comment.createdAt), "dd MMM 'às' HH:mm", { locale: ptBR })}
+                      </span>
+                    </div>
+                    <div className="rounded-lg bg-muted p-3">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
       </ScrollArea>
@@ -115,8 +124,7 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
           <div className="flex gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user?.avatar || "/placeholder.svg"} />
-              <AvatarFallback>{user?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-2">
               <Textarea

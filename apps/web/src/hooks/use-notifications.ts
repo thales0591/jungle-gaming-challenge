@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useAuthStore } from "@/lib/store"
-import type { Notification } from "@/types"
+import type { Notification } from "@/services/tasks/interface"
 
 // Mock notifications
 const mockNotifications: Notification[] = [

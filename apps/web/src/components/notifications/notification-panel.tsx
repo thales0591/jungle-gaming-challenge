@@ -9,7 +9,7 @@ import { Bell, CheckCheck, Trash2 } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import type { Notification } from "@/types"
+import type { Notification } from "@/services/tasks/interface"
 
 interface NotificationPanelProps {
   notifications: Notification[]

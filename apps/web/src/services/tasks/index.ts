@@ -31,6 +31,15 @@ export const fetchTasksRequest = async (
   return data;
 };
 
+export const fetchSingleTaskRequest = async (
+  taskId: string
+): Promise<RichTask> => {
+  const { data } = await api.get(
+    `/task/${taskId}`
+  );
+  return data;
+};
+
 export const updateTaskRequest = async (
   taskId: string,
   requestData: Partial<CreateTaskRequest>
@@ -41,5 +50,14 @@ export const updateTaskRequest = async (
 
 export const deleteTaskRequest = async (taskId: string): Promise<void> => {
   const { data } = await api.delete(`/task/${taskId}`);
+  return data;
+};
+
+export const fetchTasksComments = async (
+  taskId: string
+): Promise<TaskComment[]> => {
+  const { data } = await api.get(
+    `/task/${taskId}/comments`
+  );
   return data;
 };
