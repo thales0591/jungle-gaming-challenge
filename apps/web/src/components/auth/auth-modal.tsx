@@ -12,9 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { useAuthStore } from "@/lib/store";
 import {
   loginSchema,
   registerSchema,
@@ -22,7 +20,10 @@ import {
   type RegisterFormData,
 } from "@/lib/validations";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
-import { loginRequest, verifyTokenRequest } from "@/services/auth";
+import { loginRequest, registerRequest, verifyTokenRequest } from "@/services/auth";
+import type { AxiosError } from "axios";
+import { useAuthStore } from "@/lib/store";
+import { useMutation } from "@tanstack/react-query";
 
 interface AuthModalProps {
   open: boolean;
@@ -34,14 +35,13 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
-  const login = useAuthStore((state) => state.login);
+  const { login } = useAuthStore();
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      rememberMe: false,
     },
   });
 
@@ -55,45 +55,64 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     },
   });
 
+  const loginMutation = useMutation({
+    mutationFn: loginRequest,
+    onError: (error) => {
+      const axiosError = error as AxiosError;
+      if (axiosError.status === 401) {
+        toast({
+          title: "Erro ao fazer login",
+          description: "Credenciais inválidas. Tente novamente.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao fazer login",
+          description:
+            "Ocorreu um erro inesperado, por favor entre em contato com o suporte.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: registerRequest,
+    onError: (error) => {
+      const axiosError = error as AxiosError;
+      if (axiosError.status === 409) {
+        toast({
+          title: "Erro ao tentar criar conta",
+          description: "Um usuário com o mesmo e-mail já existe, por favor, utilize outro.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erro ao tentar criar conta",
+          description:
+            "Ocorreu um erro inesperado, por favor entre em contato com o suporte.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
   const onLoginSubmit = async (data: LoginFormData) => {
-    try {
-      const { accessToken } = await loginRequest(data);
-      const user = await verifyTokenRequest({ token: accessToken});
-      login(user, accessToken);
-      toast({
-        title: "Login realizado com sucesso!",
-        description: `Bem-vindo de volta, ${user.name}!`,
-      });
-      onOpenChange(false);
-    } catch (error) {
-      toast({
-        title: "Erro ao fazer login",
-        description: "Credenciais inválidas. Tente novamente.",
-        variant: "destructive",
-      });
-    }
+    const { accessToken } = await loginMutation.mutateAsync(data);
+    const user = await verifyTokenRequest({ token: accessToken });
+    login(user, accessToken);
+    onOpenChange(false);
   };
 
   const onRegisterSubmit = async (data: RegisterFormData) => {
-    // try {
-    //   const response = await api.register(
-    //     data.username,
-    //     data.email,
-    //     data.password
-    //   );
-    //   login(response.user, response.token);
-    //   toast({
-    //     title: "Conta criada com sucesso!",
-    //     description: "Você já pode começar a usar o sistema.",
-    //   });
-    //   onOpenChange(false);
-    // } catch (error) {
-    //   toast({
-    //     title: "Erro ao criar conta",
-    //     description: "Não foi possível criar sua conta. Tente novamente.",
-    //     variant: "destructive",
-    //   });
-    // }
+      const user = await registerMutation.mutateAsync(data);
+      const { accessToken } = await loginMutation.mutateAsync(data);
+      login(user, accessToken);
+      toast({
+        title: "Conta criada com sucesso!",
+        description: "Você já pode começar a usar o sistema.",
+      });
+      onOpenChange(false);
   };
 
   return (
@@ -164,16 +183,6 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
                     {loginForm.formState.errors.password.message}
                   </p>
                 )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox id="remember" {...loginForm.register("rememberMe")} />
-                <Label
-                  htmlFor="remember"
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  Lembrar-me
-                </Label>
               </div>
 
               <Button

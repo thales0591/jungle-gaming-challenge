@@ -1,8 +1,8 @@
-import { useState } from "react"
-import { useNavigate } from "@tanstack/react-router"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,46 +10,57 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { NotificationPanel } from "@/components/notifications/notification-panel"
-import { useNotifications } from "@/hooks/use-notifications"
-import { useAuthStore } from "@/lib/store"
-import { CheckCircle2, Search, Plus, LogOut, User, Settings } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dropdown-menu";
+import { NotificationPanel } from "@/components/notifications/notification-panel";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useAuthStore } from "@/lib/store";
+import {
+  CheckCircle2,
+  Search,
+  Plus,
+  LogOut,
+  User,
+  Settings,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
-  onNewTask?: () => void
-  onSearch?: (query: string) => void
-  searchQuery?: string
+  onNewTask?: () => void;
+  onSearch?: (query: string) => void;
+  searchQuery?: string;
 }
 
 export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
-  const { user, logout } = useAuthStore()
-  const navigate = useNavigate()
-  const { toast } = useToast()
-  const [localSearch, setLocalSearch] = useState(searchQuery)
-  const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications()
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [localSearch, setLocalSearch] = useState(searchQuery);
+  const { notifications, markAsRead, markAllAsRead, deleteNotification } =
+    useNotifications();
 
   const handleLogout = () => {
-    logout()
+    logout();
     toast({
       title: "Logout realizado",
       description: "Até logo!",
-    })
-    navigate({ to: "/" })
-  }
+    });
+    navigate({ to: "/" });
+  };
 
   const handleSearchChange = (value: string) => {
-    setLocalSearch(value)
-    onSearch?.(value)
-  }
+    setLocalSearch(value);
+    onSearch?.(value);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-            <button onClick={() => navigate({ to: "/tasks" })} className="flex items-center gap-2 hover:opacity-80">
+            <button
+              onClick={() => navigate({ to: "/tasks" })}
+              className="flex items-center gap-2 hover:opacity-80"
+            >
               <CheckCircle2 className="h-6 w-6 text-primary" />
               <span className="text-xl font-semibold">TaskFlow</span>
             </button>
@@ -80,18 +91,26 @@ export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                <Button
+                  variant="ghost"
+                  className="relative h-9 w-9 rounded-full hover:text-gray-600"
+                >
                   <Avatar className="h-9 w-9">
-                    <AvatarImage src={user?.avatar || "/placeholder.svg"} alt={user?.username} />
-                    <AvatarFallback>{user?.username?.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {user?.name?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.username}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    <p className="text-sm font-medium leading-none">
+                      {user?.name}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user?.email}
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -126,5 +145,5 @@ export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
         </div>
       </div>
     </header>
-  )
+  );
 }
