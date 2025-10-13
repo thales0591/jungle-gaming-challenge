@@ -21,6 +21,7 @@ import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { GetPaginatedTasksQuery } from './dtos/get-paginated-tasks.request';
 import { UpdateTaskRequest } from './dtos/update-task.request';
 import { LoggedUserId } from '../../decorators/logged-user.decorator';
+import { TaskWithUsersResponse } from './dtos/task-with-user.response';
 
 @Controller('task')
 export class TaskController {
@@ -61,18 +62,18 @@ export class TaskController {
   @Get()
   async getPaginated(
     @Query() { page, size }: GetPaginatedTasksQuery,
-  ): Promise<TaskResponse[]> {
+  ): Promise<TaskWithUsersResponse[]> {
     const tasks = await this.getPaginatedTasksUseCase.execute({
       page,
       size,
     });
-    return tasks.map(TaskResponse.from);
+    return tasks.map(TaskWithUsersResponse.from);
   }
 
   @Get(':id')
-  async findById(@Param('id') id: string): Promise<TaskResponse> {
+  async findById(@Param('id') id: string): Promise<TaskWithUsersResponse> {
     const task = await this.findTaskByIdUseCase.execute(UniqueId.create(id));
-    return TaskResponse.from(task);
+    return TaskWithUsersResponse.from(task);
   }
 
   @Put(':id')

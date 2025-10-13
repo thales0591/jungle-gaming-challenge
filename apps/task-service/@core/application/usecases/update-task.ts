@@ -32,8 +32,10 @@ export class UpdateTaskUseCase {
     status,
     assignedUserIds,
   }: UpdateTaskProps): Promise<Task> {
-    const task = await this.taskRepository.findById(id);
-    if (!task) throw new NotFoundException('Task not found');
+    const richTask = await this.taskRepository.findById(id);
+    if (!richTask) throw new NotFoundException('Task not found');
+
+    const task = richTask.task;
 
     task.update({
       title,
@@ -55,7 +57,7 @@ export class UpdateTaskUseCase {
       priority: task.priority,
       dueDate: task.dueDate,
       authorId: task.authorId.toString(),
-      assignedUserIds: task.assignedUserIds.map(id => id.toString()),
+      assignedUserIds: task.assignedUserIds.map((id) => id.toString()),
       updatedAt: task.updatedAt,
     });
 

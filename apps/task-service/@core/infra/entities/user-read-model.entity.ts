@@ -1,4 +1,5 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToMany } from 'typeorm';
+import { TaskEntity } from './task.entity';
 
 @Entity({ name: 'users_read_model' })
 export class UserReadModelEntity {
@@ -13,4 +14,7 @@ export class UserReadModelEntity {
 
   @Column({ type: 'timestamp' })
   createdAt: Date;
+
+  @ManyToMany(() => TaskEntity, (task) => task.assignedUsers)
+  assignedTasks: TaskEntity[];
 }

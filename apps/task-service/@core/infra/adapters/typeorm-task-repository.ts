@@ -1,21 +1,32 @@
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { TaskEntity } from '../entities/task.entity';
 import { Task } from '@core/domain/entities/task';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { TaskStatus, TaskPriority } from '@core/domain/entities/task';
 import { TaskRepository } from '@core/domain/ports';
 import { ITypeOrm } from '../typeorm-client';
+import { UserReadModelEntity } from '../entities/user-read-model.entity';
+import { DomainException } from '@core/domain/exceptions/domain-exception';
+import { DomainTaskWithUsers } from '@core/domain/ports/types';
 
 export class TypeOrmTaskRepository extends TaskRepository {
   private repository: Repository<TaskEntity>;
+  private userRepository: Repository<UserReadModelEntity>;
 
   constructor(private readonly orm: ITypeOrm) {
     super();
     this.repository = this.orm.dataSource.getRepository(TaskEntity);
+    this.userRepository =
+      this.orm.dataSource.getRepository(UserReadModelEntity);
   }
 
   async create(task: Task): Promise<void> {
-    await this.repository.insert({
+    const userIds = task.assignedUserIds.map((id) => id.value);
+    const assignedUsers = userIds.length
+      ? await this.userRepository.find({ where: { id: In(userIds) } })
+      : [];
+
+    await this.repository.save({
       id: task.id.value,
       authorId: task.authorId.toString(),
       title: task.title,
@@ -23,13 +34,18 @@ export class TypeOrmTaskRepository extends TaskRepository {
       dueDate: task.dueDate,
       priority: task.priority,
       status: task.status,
-      assignedUserIds: task.assignedUserIds.map((id) => id.value),
       createdAt: task.createdAt,
       updatedAt: task.updatedAt ?? new Date(),
+      assignedUsers,
     });
   }
 
-  async save(task: Task): Promise<void> {
+  async update(task: Task): Promise<void> {
+    const userIds = task.assignedUserIds.map((id) => id.value);
+    const assignedUsers = userIds.length
+      ? await this.userRepository.find({ where: { id: In(userIds) } })
+      : [];
+
     await this.repository.update(task.id.value, {
       id: task.id.value,
       title: task.title,
@@ -37,45 +53,51 @@ export class TypeOrmTaskRepository extends TaskRepository {
       dueDate: task.dueDate,
       priority: task.priority,
       status: task.status,
-      assignedUserIds: task.assignedUserIds.map((id) => id.value),
       createdAt: task.createdAt,
       updatedAt: task.updatedAt ?? new Date(),
+      assignedUsers,
     });
   }
 
-  async findMany(page: number, size: number): Promise<Task[]> {
+  async findManyWithUsers(
+    page: number,
+    size: number,
+  ): Promise<DomainTaskWithUsers[]> {
     const [rows] = await this.repository.findAndCount({
       skip: (page - 1) * size,
       take: size,
       order: { createdAt: 'DESC' },
+      relations: ['assignedUsers'],
     });
-    return rows.map((t) => this.toDoamain(t)!);
+
+    const authorIds = rows.map((t) => t.authorId);
+    const authors = await this.userRepository.find({
+      where: { id: In(authorIds) },
+    });
+    const authorsMap = new Map(authors.map((u) => [u.id, u]));
+
+    return rows.map((t) => this.toDomainWithUsers(t, authorsMap));
   }
 
-  async findById(id: UniqueId): Promise<Task | null> {
-    const task = await this.repository.findOne({ where: { id: id.value } });
-    return this.toDoamain(task);
-  }
-
-  async update(task: Task): Promise<void> {
-    await this.repository.save({
-      id: task.id.value,
-      title: task.title,
-      description: task.description,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      status: task.status,
-      assignedUserIds: task.assignedUserIds.map((id) => id.value),
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt ?? new Date(),
+  async findById(id: UniqueId): Promise<DomainTaskWithUsers | null> {
+    const task = await this.repository.findOne({
+      where: { id: id.value },
+      relations: ['assignedUsers'],
     });
+    if (!task) return null;
+
+    const author = await this.userRepository.findOneOrFail({
+      where: { id: task.authorId },
+    });
+    const authorsMap = new Map([[task.authorId, author]]);
+    return this.toDomainWithUsers(task, authorsMap);
   }
 
   async delete(id: UniqueId): Promise<void> {
     await this.repository.delete(id.value);
   }
 
-  private toDoamain(task: TaskEntity | null): Task | null {
+  private toDomain(task: TaskEntity | null): Task | null {
     if (!task) return null;
 
     const {
@@ -85,7 +107,7 @@ export class TypeOrmTaskRepository extends TaskRepository {
       dueDate,
       priority,
       status,
-      assignedUserIds,
+      assignedUsers = [],
       createdAt,
       updatedAt,
       authorId,
@@ -99,13 +121,38 @@ export class TypeOrmTaskRepository extends TaskRepository {
         dueDate,
         priority: priority as TaskPriority,
         status: status as TaskStatus,
-        assignedUserIds: (assignedUserIds ?? []).map((id) =>
-          UniqueId.create(id),
-        ),
+        assignedUserIds: assignedUsers.map((user) => UniqueId.create(user.id)),
         createdAt,
         updatedAt,
       },
       new UniqueId(id),
     );
+  }
+
+  private toDomainWithUsers(
+    taskEntity: TaskEntity,
+    authorsMap: Map<string, UserReadModelEntity>,
+  ): DomainTaskWithUsers {
+    const domainTask = this.toDomain(taskEntity)!;
+    const author = authorsMap.get(taskEntity.authorId);
+
+    if (!author) {
+      throw new DomainException(`Author not found for task ${taskEntity.id}`);
+    }
+
+    return {
+      task: domainTask,
+      author: {
+        id: author.id,
+        name: author.username,
+        email: author.email,
+      },
+      assignedUsers:
+        taskEntity.assignedUsers?.map((user) => ({
+          id: user.id,
+          name: user.username,
+          email: user.email,
+        })),
+    };
   }
 }

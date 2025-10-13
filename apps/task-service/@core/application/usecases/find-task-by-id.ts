@@ -2,11 +2,12 @@ import { Task } from '@core/domain/entities/task';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { NotFoundException } from '@core/domain/exceptions/not-found-exception';
 import { TaskRepository } from '@core/domain/ports/';
+import { DomainTaskWithUsers } from '@core/domain/ports/types';
 
 export class FindTaskByIdUseCase {
   constructor(private readonly taskRepository: TaskRepository) {}
 
-  async execute(id: UniqueId): Promise<Task> {
+  async execute(id: UniqueId): Promise<DomainTaskWithUsers> {
     const task = await this.taskRepository.findById(id);
 
     if (!task) {

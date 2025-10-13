@@ -6,8 +6,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { TaskCommentEntity } from './task-comment.entity';
+import { UserReadModelEntity } from './user-read-model.entity';
 
 @Entity('tasks')
 export class TaskEntity {
@@ -42,13 +45,16 @@ export class TaskEntity {
   })
   status: TaskStatus;
 
-  @Column({
-    type: 'uuid',
-    array: true,
-    name: 'assigned_user_ids',
-    default: '{}',
+  @ManyToMany(() => UserReadModelEntity, (user) => user.assignedTasks, {
+    cascade: false,
+    eager: false,
   })
-  assignedUserIds: string[];
+  @JoinTable({
+    name: 'task_assigned_users',
+    joinColumn: { name: 'task_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
+  })
+  assignedUsers: UserReadModelEntity[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;

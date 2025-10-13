@@ -30,11 +30,13 @@ export class CreateTaskCommentUseCase {
       throw new NotFoundException('User not found');
     }
 
-    const task = await this.taskRepository.findById(taskId);
+    const richTask = await this.taskRepository.findById(taskId);
 
-    if (!task) {
+    if (!richTask) {
       throw new NotFoundException('User not found');
     }
+    
+    const task = richTask.task
 
     const taskComment = TaskComment.create({
       content,
