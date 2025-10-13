@@ -11,4 +11,5 @@ export abstract class UserRepository {
     refreshToken: string,
   ): Promise<void>;
   abstract findByRefreshToken(token: string): Promise<User | null>;
+  abstract findAll(): Promise<User[]>
 }

@@ -13,6 +13,7 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
 import { GetMeUseCase } from '@core/application/usecases/get-me';
 import { VerifyTokenUseCase } from '@core/application/usecases/verify';
 import { ConfigService } from '@nestjs/config';
+import { FetchAllUsersUseCase } from '@core/application/usecases/fetch-users';
 
 @Module({
   imports: [AdaptersModule, DatabaseModule],
@@ -65,6 +66,15 @@ import { ConfigService } from '@nestjs/config';
       },
       inject: [AuthToken, UserRepository, ConfigService],
     },
+    {
+      provide: FetchAllUsersUseCase,
+      useFactory: (
+        repository: UserRepository,
+      ) => {
+        return new FetchAllUsersUseCase(repository);
+      },
+      inject: [UserRepository],
+    },    
   ],
   exports: [
     LoginUseCase,
@@ -72,6 +82,7 @@ import { ConfigService } from '@nestjs/config';
     RefreshTokenUseCase,
     GetMeUseCase,
     VerifyTokenUseCase,
+    FetchAllUsersUseCase
   ],
 })
 export class UseCasesModule {}

@@ -22,6 +22,12 @@ export class GatewayController {
     return res.status(result.status).send(result.data);
   }
 
+  @All('users/*path')
+  async handleUsers(@Req() req, @Res() res) {
+    const result = await this.authProxy.forward(req);
+    return res.status(result.status).send(result.data);
+  }
+
   @Public()
   @All('auth/*path')
   async handleAuth(@Req() req, @Res() res) {

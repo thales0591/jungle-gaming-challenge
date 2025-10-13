@@ -59,6 +59,14 @@ export class TypeOrmUserRepository extends UserRepository {
     return this.userToDomain(user);
   }
 
+  async findAll(): Promise<DomainUser[]> {
+    const users = await this.repository.find();
+
+    const domainUsers = users.map((user) => this.userToDomain(user)!);
+
+    return domainUsers;
+  }
+
   private userToDomain(user: TypeOrmUser | null): DomainUser | null {
     if (!user) return null;
 

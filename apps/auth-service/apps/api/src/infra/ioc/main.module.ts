@@ -5,6 +5,7 @@ import { envSchema } from './env/env';
 import { MiddlewareModule } from '../middlewares/middlewate.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { RmqModule } from '../messaging/rmq.module';
+import { UsersModule } from '../modules/users/users.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RmqModule } from '../messaging/rmq.module';
     MiddlewareModule,
     AuthModule,
     RmqModule,
+    UsersModule,
   ],
 })
 export class MainModule {}
