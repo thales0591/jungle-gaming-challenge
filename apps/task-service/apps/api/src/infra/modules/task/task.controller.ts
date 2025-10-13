@@ -62,8 +62,10 @@ export class TaskController {
   @Get()
   async getPaginated(
     @Query() { page, size }: GetPaginatedTasksQuery,
+    @LoggedUserId() userId: string
   ): Promise<TaskWithUsersResponse[]> {
     const tasks = await this.getPaginatedTasksUseCase.execute({
+      userId,
       page,
       size,
     });

@@ -60,15 +60,20 @@ export class TypeOrmTaskRepository extends TaskRepository {
   }
 
   async findManyWithUsers(
+    userId: string,
     page: number,
     size: number,
   ): Promise<DomainTaskWithUsers[]> {
-    const [rows] = await this.repository.findAndCount({
-      skip: (page - 1) * size,
-      take: size,
-      order: { createdAt: 'DESC' },
-      relations: ['assignedUsers'],
-    });
+    const rows = await this.repository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.assignedUsers', 'assignedUser')
+      .leftJoin('task.assignedUsers', 'user')
+      .where('task.authorId = :userId', { userId })
+      .orWhere('user.id = :userId', { userId })
+      .orderBy('task.createdAt', 'DESC')
+      .skip((page - 1) * size)
+      .take(size)
+      .getMany();
 
     const authorIds = rows.map((t) => t.authorId);
     const authors = await this.userRepository.find({

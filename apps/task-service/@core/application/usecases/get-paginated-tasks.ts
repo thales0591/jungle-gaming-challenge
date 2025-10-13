@@ -3,6 +3,7 @@ import { DEFAULT_PAGE, DEFAULT_SIZE } from '../constants';
 import { DomainTaskWithUsers } from '@core/domain/ports/types';
 
 export interface GetPaginatedTasksUseCaseRequest {
+  userId: string
   size: number;
   page: number;
 }
@@ -15,6 +16,6 @@ export class GetPaginatedTasksUseCase {
   ): Promise<DomainTaskWithUsers[]> {
     const page = Math.max(1, props.page ?? DEFAULT_PAGE);
     const size = Math.max(1, props.size ?? DEFAULT_SIZE);
-    return this.taskRepository.findManyWithUsers(page, size);
+    return this.taskRepository.findManyWithUsers(props.userId, page, size);
   }
 }
