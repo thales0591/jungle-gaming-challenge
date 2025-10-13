@@ -10,7 +10,8 @@ export class TasksProxyService {
 
   async forward(req: Request) {
     try {
-      const url = `${this.baseUrl}${req.originalUrl.replace('/api', '')}`;
+      const path = req.originalUrl.replace('/api', '').split('?')[0];
+      const url = `${this.baseUrl}${path}`;
 
       this.logger.log(`Forwarding ${req.method} ${url}`);
 
