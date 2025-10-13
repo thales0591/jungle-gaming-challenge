@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { MainModule } from './infra/ioc/main.module';
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -14,7 +15,9 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
-  const port = process.env.PORT || 4000;
+  const configService = app.get(ConfigService);
+  const port = configService.getOrThrow<string>('PORT');
+
   await app.listen(port);
 
   logger.log(`API Gateway running on http://localhost:${port}/api`);

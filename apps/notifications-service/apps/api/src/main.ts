@@ -24,7 +24,7 @@ async function bootstrap() {
 
   await app.startAllMicroservices();
 
-  const port = 3002;
+  const port = configService.getOrThrow<string>('PORT');
   await app.listen(port);
 
   logger.log(`Notifications Service running on http://localhost:${port}`);

@@ -12,6 +12,7 @@ export const envSchema = z.object({
   AUTH_ACCESS_EXPIRATION_SECONDS: z.coerce.number(),
   AUTH_REFRESH_EXPIRATION_SECONDS: z.coerce.number(), 
   RABBITMQ_URL: z.string(),
-  RABBITMQ_QUEUE: z.string()
+  RABBITMQ_QUEUE: z.string(),
+  PORT: z.coerce.number().default(3333),
 });
 export type Env = z.infer<typeof envSchema>;

@@ -29,6 +29,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  await app.listen(3001);
+
+  const port = configService.getOrThrow<string>('PORT');
+
+  await app.listen(port);
 }
 void bootstrap();

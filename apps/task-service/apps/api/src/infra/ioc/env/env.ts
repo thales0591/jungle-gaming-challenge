@@ -9,5 +9,6 @@ export const envSchema = z.object({
   RABBITMQ_URL: z.string(),
   RABBITMQ_QUEUE: z.string(),
   NODE_ENV: z.string(),
+  PORT: z.coerce.number().default(3334)
 });
 export type Env = z.infer<typeof envSchema>;

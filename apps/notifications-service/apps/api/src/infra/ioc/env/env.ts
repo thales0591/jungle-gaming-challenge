@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const envSchema = z.object({
-  PORT: z.coerce.number().default(3002),
+  PORT: z.coerce.number().default(3335),
   NODE_ENV: z.string().default('development'),
   JWT_SECRET: z.string(),
   RABBITMQ_URL: z.string(),
