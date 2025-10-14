@@ -1,5 +1,5 @@
-import { Task } from "@core/domain/entities/task";
-import { TaskComment } from "@core/domain/entities/task-comment";
+import { Task, TaskPriority, TaskStatus } from '@core/domain/entities/task';
+import { TaskComment } from '@core/domain/entities/task-comment';
 
 export interface DomainTaskWithUsers {
   task: Task;
@@ -22,4 +22,12 @@ export interface TaskCommentWithAuthor {
     name: string;
     email: string;
   };
+}
+
+export type TaskSortBy = 'newest' | 'oldest' | 'due-date' | 'priority';
+
+export interface TaskFilters {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  sortBy?: TaskSortBy;
 }

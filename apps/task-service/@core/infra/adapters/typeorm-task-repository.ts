@@ -1,4 +1,4 @@
-import { In, Repository } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { TaskEntity } from '../entities/task.entity';
 import { Task } from '@core/domain/entities/task';
 import { UniqueId } from '@core/domain/value-objects/unique-id';
@@ -7,7 +7,7 @@ import { TaskRepository } from '@core/domain/ports';
 import { ITypeOrm } from '../typeorm-client';
 import { UserReadModelEntity } from '../entities/user-read-model.entity';
 import { DomainException } from '@core/domain/exceptions/domain-exception';
-import { DomainTaskWithUsers } from '@core/domain/ports/types';
+import { DomainTaskWithUsers, TaskFilters } from '@core/domain/ports/types';
 
 export class TypeOrmTaskRepository extends TaskRepository {
   private repository: Repository<TaskEntity>;
@@ -70,13 +70,25 @@ export class TypeOrmTaskRepository extends TaskRepository {
     userId: string,
     page: number,
     size: number,
+    filters?: TaskFilters,
   ): Promise<DomainTaskWithUsers[]> {
-    const rows = await this.repository
+    let query = this.repository
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.assignedUsers', 'assignedUser')
       .leftJoin('task.assignedUsers', 'user')
-      .where('(task.authorId = :userId OR user.id = :userId)', { userId })
-      .orderBy('task.createdAt', 'DESC')
+      .where('(task.authorId = :userId OR user.id = :userId)', { userId });
+
+    if (filters?.status) {
+      query = query.andWhere('task.status = :status', { status: filters.status });
+    }
+
+    if (filters?.priority) {
+      query = query.andWhere('task.priority = :priority', { priority: filters.priority });
+    }
+
+    query = this.applySorting(query, filters?.sortBy);
+
+    const rows = await query
       .skip((page - 1) * size)
       .take(size)
       .getMany();
@@ -88,6 +100,36 @@ export class TypeOrmTaskRepository extends TaskRepository {
     const authorsMap = new Map(authors.map((u) => [u.id, u]));
 
     return rows.map((t) => this.toDomainWithUsers(t, authorsMap));
+  }
+
+  private applySorting(
+    query: SelectQueryBuilder<TaskEntity>,
+    sortBy?: string,
+  ): SelectQueryBuilder<TaskEntity> {
+    switch (sortBy) {
+      case 'oldest':
+        return query.orderBy('task.createdAt', 'ASC');
+      case 'due-date':
+        return query
+          .orderBy('task.dueDate', 'ASC', 'NULLS LAST')
+          .addOrderBy('task.createdAt', 'DESC');
+      case 'priority':
+        return query
+          .addOrderBy(
+            `CASE task.priority
+              WHEN 'URGENT' THEN 1
+              WHEN 'HIGH' THEN 2
+              WHEN 'MEDIUM' THEN 3
+              WHEN 'LOW' THEN 4
+              ELSE 5
+            END`,
+            'ASC',
+          )
+          .addOrderBy('task.createdAt', 'DESC');
+      case 'newest':
+      default:
+        return query.orderBy('task.createdAt', 'DESC');
+    }
   }
 
   async findById(id: UniqueId): Promise<DomainTaskWithUsers | null> {

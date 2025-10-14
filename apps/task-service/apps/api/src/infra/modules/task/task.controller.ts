@@ -61,13 +61,16 @@ export class TaskController {
 
   @Get()
   async getPaginated(
-    @Query() { page, size }: GetPaginatedTasksQuery,
+    @Query() { page, size, status, priority, sortBy }: GetPaginatedTasksQuery,
     @LoggedUserId() userId: string
   ): Promise<TaskWithUsersResponse[]> {
     const tasks = await this.getPaginatedTasksUseCase.execute({
       userId,
       page,
       size,
+      status,
+      priority,
+      sortBy,
     });
     return tasks.map(TaskWithUsersResponse.from);
   }
