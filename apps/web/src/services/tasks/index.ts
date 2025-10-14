@@ -14,11 +14,14 @@ export const createTaskRequest = async (
   return data;
 };
 
-export const createTaskCommentRequest = async (
-  taskId: string,
-  content: string
-): Promise<TaskComment> => {
-  const { data } = await api.post(`/task/${taskId}/comments`, content);
+export const createTaskCommentRequest = async ({
+  taskId,
+  content,
+}: {
+  taskId: string;
+  content: string;
+}): Promise<TaskComment> => {
+  const { data } = await api.post(`/task/${taskId}/comments`, { content });
   return data;
 };
 

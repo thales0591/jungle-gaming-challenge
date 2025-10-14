@@ -29,11 +29,11 @@ import { ArrowLeft, Calendar, Pencil, Trash2, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type {
-  UserReadModel,
-} from "@/services/tasks/interface";
+import type { UserReadModel } from "@/services/tasks/interface";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  createTaskCommentRequest,
+  deleteTaskRequest,
   fetchSingleTaskRequest,
   fetchTasksComments,
   updateTaskRequest,
@@ -127,48 +127,71 @@ function TaskDetailPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleAddComment = async (_content: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A adição de comentários será implementada em breve.",
-    });
-  };
-
-  const handleDelete = async () => {
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+  const addTaskCommentMutation = useMutation({
+    mutationFn: createTaskCommentRequest,
+    onError: () => {
       toast({
-        title: "Tarefa excluída",
-        description: "A tarefa foi excluída com sucesso.",
-      });
-      navigate({ to: "/tasks" });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a tarefa.",
+        title: "Erro ao criar comentário",
+        description:
+          "Ocorreu um erro inesperado, por favor, entre em contato com o suporte",
         variant: "destructive",
       });
-    }
-  };
+    },
+  });
+
+  async function handleAddTaskComment(content: string) {
+    if (!taskData) return;
+    await addTaskCommentMutation.mutateAsync({
+      taskId: taskData.id,
+      content: content,
+    });
+    toast({
+      title: "Comentário adicionado",
+      description: "Seu comentário foi publicado com sucesso.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["task", params.taskId, "comments"] });
+  }
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: deleteTaskRequest,
+    onError: () => {
+      toast({
+        title: "Erro ao deletar tarefa",
+        description:
+          "Ocorreu um erro inesperado, por favor, entre em contato com o suporte",
+        variant: "destructive",
+      });
+    },
+  });
+
+  async function handleDelete(taskId: string) {
+    if (!taskId) return;
+    await deleteTaskMutation.mutateAsync(taskId);
+    toast({
+      title: "Sucesso",
+      description: "A tarefa foi deletada.",
+    });
+    navigate({ to: "/tasks" });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  }
 
   const updateTaskMutation = useMutation({
     mutationFn: updateTaskRequest,
     onError: () => {
       toast({
         title: "Erro ao atualizar tarefa",
-        description: "Ocorreu um erro inesperado, por favor, entre em contato com o suporte",
+        description:
+          "Ocorreu um erro inesperado, por favor, entre em contato com o suporte",
         variant: "destructive",
       });
     },
   });
 
   async function handleEditTask(data: TaskFormData) {
-    console.log('upddata: ', JSON.stringify(data))
-    if (!taskData) return
+    if (!taskData) return;
     await updateTaskMutation.mutateAsync({
       taskId: taskData.id,
-      requestData: data
+      requestData: data,
     });
     toast({
       title: "Sucesso",
@@ -188,13 +211,13 @@ function TaskDetailPage() {
         <Header />
         <main className="container mx-auto px-4 py-6">
           <div className="space-y-6">
-            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-32 bg-gray-800" />
             <div className="grid lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
-                <Skeleton className="h-64" />
+                <Skeleton className="h-64 bg-gray-800" />
               </div>
               <div className="space-y-6">
-                <Skeleton className="h-96" />
+                <Skeleton className="h-96 bg-gray-800" />
               </div>
             </div>
           </div>
@@ -269,7 +292,7 @@ function TaskDetailPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setEditModalOpen(true)}
-                      className="gap-2"
+                      className="gap-2 hover:text-gray-500"
                     >
                       <Pencil className="h-4 w-4" />
                       Editar
@@ -278,7 +301,7 @@ function TaskDetailPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setDeleteDialogOpen(true)}
-                      className="gap-2"
+                      className="gap-2 hover:text-gray-500"
                     >
                       <Trash2 className="h-4 w-4" />
                       Excluir
@@ -308,7 +331,7 @@ function TaskDetailPage() {
                     taskId={taskData.id}
                     comments={taskCommentsData}
                     isLoading={isLoadingComments}
-                    onAddComment={handleAddComment}
+                    onAddComment={handleAddTaskComment}
                   />
                 </TabsContent>
                 <TabsContent value="history" className="space-y-4">
@@ -467,8 +490,8 @@ function TaskDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground"
+              onClick={() => handleDelete(taskData.id)}
+              className="bg-destructive text-destructive-foreground hover:bg-red-500"
             >
               Excluir
             </AlertDialogAction>

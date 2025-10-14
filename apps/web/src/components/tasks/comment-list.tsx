@@ -1,74 +1,61 @@
-import { useState, useRef, useEffect } from "react"
-import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useToast } from "@/hooks/use-toast"
-import { useAuthStore } from "@/lib/store"
-import { commentSchema, type CommentFormData } from "@/lib/validations"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { Loader2, Send } from "lucide-react"
-import type { TaskComment } from "@/services/tasks/interface"
+import { useRef, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/lib/store";
+import { commentSchema, type CommentFormData } from "@/lib/validations";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Loader2, Send } from "lucide-react";
+import type { TaskComment } from "@/services/tasks/interface";
 
 // Temporary mock user data - TODO: Fetch user data from API
 const mockUsers: Record<string, { name: string; email: string }> = {
   "1": { name: "João Silva", email: "joao@example.com" },
   "2": { name: "Maria Santos", email: "maria@example.com" },
   "3": { name: "Pedro Costa", email: "pedro@example.com" },
-}
+};
 
 interface CommentListProps {
-  taskId: string
-  comments: TaskComment[]
-  isLoading?: boolean
-  onAddComment?: (content: string) => Promise<void>
+  taskId: string;
+  comments: TaskComment[];
+  isLoading?: boolean;
+  onAddComment?: (content: string) => Promise<void>;
 }
 
-export function CommentList({ comments, isLoading, onAddComment }: CommentListProps) {
-  const { user } = useAuthStore()
-  const { toast } = useToast()
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function CommentList({
+  comments,
+  isLoading,
+  onAddComment,
+}: CommentListProps) {
+  const { user } = useAuthStore();
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<CommentFormData>({
     resolver: zodResolver(commentSchema),
     defaultValues: {
       content: "",
     },
-  })
+  });
 
   useEffect(() => {
     // Auto-scroll to bottom when new comments are added
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [comments.length])
+  }, [comments.length]);
 
   const onSubmit = async (data: CommentFormData) => {
-    if (!onAddComment) return
+    if (!onAddComment) return;
+    await onAddComment(data.content);
+    form.reset();
+  };
 
-    setIsSubmitting(true)
-    try {
-      await onAddComment(data.content)
-      form.reset()
-      toast({
-        title: "Comentário adicionado",
-        description: "Seu comentário foi publicado com sucesso.",
-      })
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível adicionar o comentário.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
+  const isSubmitting = form.formState.isSubmitting
 
   if (isLoading) {
     return (
@@ -83,12 +70,12 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
           </div>
         ))}
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-4">
-      <ScrollArea className="h-[400px] pr-4" ref={scrollRef}>
+      <ScrollArea className="h-[350px] pr-4" ref={scrollRef}>
         <div className="space-y-4">
           {comments.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
@@ -96,25 +83,36 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
             </div>
           ) : (
             comments.map((comment) => {
-              const author = mockUsers[comment.authorId] || { name: "Usuário Desconhecido", email: "" }
+              const author = mockUsers[comment.authorId] || {
+                name: "Usuário Desconhecido",
+                email: "",
+              };
               return (
                 <div key={comment.id} className="flex gap-3 group">
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback>{author.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {author.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">{author.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(comment.createdAt), "dd MMM 'às' HH:mm", { locale: ptBR })}
+                        {format(
+                          new Date(comment.createdAt),
+                          "dd MMM 'às' HH:mm",
+                          { locale: ptBR }
+                        )}
                       </span>
                     </div>
                     <div className="rounded-lg bg-muted p-3">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.content}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {comment.content}
+                      </p>
                     </div>
                   </div>
                 </div>
-              )
+              );
             })
           )}
         </div>
@@ -124,28 +122,39 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
           <div className="flex gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback>{user?.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>
+                {user?.name?.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div className="flex-1 space-y-2">
               <Textarea
                 placeholder="Escreva um comentário..."
                 rows={3}
                 maxLength={1000}
+                className="max-h-30"
                 {...form.register("content")}
                 disabled={isSubmitting}
               />
               {form.formState.errors.content && (
-                <p className="text-sm text-destructive">{form.formState.errors.content.message}</p>
+                <p className="text-sm text-destructive">
+                  {form.formState.errors.content.message}
+                </p>
               )}
               <div className="flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">{form.watch("content")?.length || 0}/1000 caracteres</p>
+                <p className="text-xs text-muted-foreground">
+                  {form.watch("content")?.length || 0}/1000 caracteres
+                </p>
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || !form.watch("content")?.trim()}
                   className="gap-2"
                 >
-                  {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                  {isSubmitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
                   Comentar
                 </Button>
               </div>
@@ -154,5 +163,5 @@ export function CommentList({ comments, isLoading, onAddComment }: CommentListPr
         </form>
       </div>
     </div>
-  )
+  );
 }
