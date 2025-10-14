@@ -28,9 +28,24 @@ export const createTaskCommentRequest = async ({
 export const fetchTasksRequest = async (
   requestData: FetchTasksRequestData
 ): Promise<RichTask[]> => {
-  const { data } = await api.get(
-    `/task?page=${requestData.page}&size=${requestData.size}`
-  );
+  const params = new URLSearchParams({
+    page: requestData.page.toString(),
+    size: requestData.size.toString(),
+  });
+
+  if (requestData.status) {
+    params.append('status', requestData.status);
+  }
+
+  if (requestData.priority) {
+    params.append('priority', requestData.priority);
+  }
+
+  if (requestData.sortBy) {
+    params.append('sortBy', requestData.sortBy);
+  }
+
+  const { data } = await api.get(`/task?${params.toString()}`);
   return data;
 };
 

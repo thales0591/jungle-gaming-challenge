@@ -33,6 +33,8 @@ export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 
 export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE";
 
+export type TaskSortBy = "newest" | "oldest" | "due-date" | "priority";
+
 export interface CreateTaskRequest {
   title: string;
   description: string;
@@ -45,6 +47,9 @@ export interface CreateTaskRequest {
 export interface FetchTasksRequestData {
   size: number;
   page: number;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  sortBy?: TaskSortBy;
 }
 
 export interface TaskComment {

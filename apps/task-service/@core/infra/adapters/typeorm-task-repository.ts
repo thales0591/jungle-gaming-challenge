@@ -86,6 +86,19 @@ export class TypeOrmTaskRepository extends TaskRepository {
       query = query.andWhere('task.priority = :priority', { priority: filters.priority });
     }
 
+    if (filters?.sortBy === 'priority') {
+      query = query.addSelect(
+        `CASE task.priority
+          WHEN 'URGENT' THEN 1
+          WHEN 'HIGH' THEN 2
+          WHEN 'MEDIUM' THEN 3
+          WHEN 'LOW' THEN 4
+          ELSE 5
+        END`,
+        'priority_rank'
+      );
+    }
+
     query = this.applySorting(query, filters?.sortBy);
 
     const rows = await query
@@ -115,16 +128,7 @@ export class TypeOrmTaskRepository extends TaskRepository {
           .addOrderBy('task.createdAt', 'DESC');
       case 'priority':
         return query
-          .addOrderBy(
-            `CASE task.priority
-              WHEN 'URGENT' THEN 1
-              WHEN 'HIGH' THEN 2
-              WHEN 'MEDIUM' THEN 3
-              WHEN 'LOW' THEN 4
-              ELSE 5
-            END`,
-            'ASC',
-          )
+          .orderBy('priority_rank', 'ASC')
           .addOrderBy('task.createdAt', 'DESC');
       case 'newest':
       default:

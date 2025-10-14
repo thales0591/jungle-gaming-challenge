@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/lib/store";
 import { Header } from "@/components/layout/header";
@@ -7,22 +7,35 @@ import { TaskSkeleton } from "@/components/tasks/task-skeleton";
 import { AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTasksRequest } from "@/services/tasks";
+import { TaskFilters } from "@/components/tasks/task-filters";
+import { z } from "zod";
+
+const tasksSearchSchema = z.object({
+  status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"]).optional(),
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  sortBy: z.enum(["newest", "oldest", "due-date", "priority"]).optional(),
+});
 
 export const Route = createFileRoute("/tasks/")({
   component: TasksPage,
+  validateSearch: tasksSearchSchema,
 });
 
 function TasksPage() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+  const search = useSearch({ from: "/tasks/" });
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: tasksData } = useQuery({
-    queryKey: ["tasks"],
+    queryKey: ["tasks", search.status, search.priority, search.sortBy],
     queryFn: () =>
       fetchTasksRequest({
         page: 1,
         size: 20,
+        status: search.status,
+        priority: search.priority,
+        sortBy: search.sortBy,
       }),
   });
 
@@ -55,6 +68,36 @@ function TasksPage() {
               </p>
             </div>
           </div>
+
+          <TaskFilters
+            status={search.status}
+            priority={search.priority}
+            sortBy={search.sortBy}
+            onStatusChange={(status) => {
+              navigate({
+                to: "/tasks",
+                search: { ...search, status },
+              });
+            }}
+            onPriorityChange={(priority) => {
+              navigate({
+                to: "/tasks",
+                search: { ...search, priority },
+              });
+            }}
+            onSortByChange={(sortBy) => {
+              navigate({
+                to: "/tasks",
+                search: { ...search, sortBy },
+              });
+            }}
+            onClearFilters={() => {
+              navigate({
+                to: "/tasks",
+                search: {},
+              });
+            }}
+          />
 
           {isLoading ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
