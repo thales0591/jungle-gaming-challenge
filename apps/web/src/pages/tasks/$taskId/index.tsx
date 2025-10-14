@@ -28,7 +28,7 @@ import { CommentList } from "@/components/tasks/comment-list";
 import { ArrowLeft, Calendar, Pencil, Trash2, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, getTaskDueDateStatus } from "@/lib/utils";
 import type { UserReadModel } from "@/services/tasks/interface";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -149,7 +149,9 @@ function TaskDetailPage() {
       title: "Comentário adicionado",
       description: "Seu comentário foi publicado com sucesso.",
     });
-    queryClient.invalidateQueries({ queryKey: ["task", params.taskId, "comments"] });
+    queryClient.invalidateQueries({
+      queryKey: ["task", params.taskId, "comments"],
+    });
   }
 
   const deleteTaskMutation = useMutation({
@@ -247,6 +249,7 @@ function TaskDetailPage() {
 
   const status = statusConfig[taskData.status];
   const priority = priorityConfig[taskData.priority];
+  const dueDateStatus = getTaskDueDateStatus(taskData.dueDate)
 
   return (
     <div className="min-h-screen bg-background">
@@ -285,6 +288,12 @@ function TaskDetailPage() {
                       <Badge className={cn("text-xs", priority.color)}>
                         {priority.label}
                       </Badge>
+                      {dueDateStatus === "due-soon" && (
+                        <Badge className="text-xs bg-[#f97316] text-white gap-1">
+                          <Clock className="h-3 w-3" />
+                          Vence em breve
+                        </Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

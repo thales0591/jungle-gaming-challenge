@@ -13,13 +13,6 @@ import { ptBR } from "date-fns/locale";
 import { Loader2, Send } from "lucide-react";
 import type { TaskComment } from "@/services/tasks/interface";
 
-// Temporary mock user data - TODO: Fetch user data from API
-const mockUsers: Record<string, { name: string; email: string }> = {
-  "1": { name: "João Silva", email: "joao@example.com" },
-  "2": { name: "Maria Santos", email: "maria@example.com" },
-  "3": { name: "Pedro Costa", email: "pedro@example.com" },
-};
-
 interface CommentListProps {
   taskId: string;
   comments: TaskComment[];
@@ -83,20 +76,16 @@ export function CommentList({
             </div>
           ) : (
             comments.map((comment) => {
-              const author = mockUsers[comment.authorId] || {
-                name: "Usuário Desconhecido",
-                email: "",
-              };
               return (
                 <div key={comment.id} className="flex gap-3 group">
                   <Avatar className="h-10 w-10">
                     <AvatarFallback>
-                      {author.name.slice(0, 2).toUpperCase()}
+                      {comment.authorName.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-sm">{author.name}</span>
+                      <span className="font-medium text-sm">{comment.authorName}</span>
                       <span className="text-xs text-muted-foreground">
                         {format(
                           new Date(comment.createdAt),

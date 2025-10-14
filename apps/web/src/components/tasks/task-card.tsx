@@ -1,10 +1,10 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Calendar } from "lucide-react"
+import { Calendar, AlertCircle, Clock } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { cn, getTaskDueDateStatus } from "@/lib/utils"
 import type { RichTask } from "@/services/tasks/interface"
 
 interface TaskCardProps {
@@ -29,6 +29,7 @@ const priorityConfig = {
 export function TaskCard({ task, onClick }: TaskCardProps) {
   const status = statusConfig[task.status]
   const priority = priorityConfig[task.priority]
+  const dueDateStatus = getTaskDueDateStatus(task.dueDate)
 
   return (
     <Card
@@ -55,6 +56,18 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
             <div className="flex items-center gap-2 flex-wrap">
               <Badge className={cn("text-xs", status.color)}>{status.label}</Badge>
               <Badge className={cn("text-xs", priority.color)}>{priority.label}</Badge>
+              {dueDateStatus === "overdue" && (
+                <Badge className="text-xs bg-[#dc2626] text-white gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Vencido
+                </Badge>
+              )}
+              {dueDateStatus === "due-soon" && (
+                <Badge className="text-xs bg-[#f97316] text-white gap-1">
+                  <Clock className="h-3 w-3" />
+                  Vence em breve
+                </Badge>
+              )}
             </div>
           </div>
         </div>

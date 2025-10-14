@@ -50,6 +50,8 @@ export interface FetchTasksRequestData {
 export interface TaskComment {
   id: string;
   taskId: string;
+  authorName: string
+  authorEmail: string
   authorId: string;
   content: string;
   createdAt: string;
