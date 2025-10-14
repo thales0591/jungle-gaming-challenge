@@ -81,11 +81,13 @@ export function TaskModal({
           description: task.description || "",
           priority: task.priority,
           status: task.status,
-          dueDate: task.dueDate,
+          dueDate: task.dueDate || null,
           assignedUserIds: task.assignedUsers.map((u) => u.id),
         });
         if (task.dueDate) {
           setDate(new Date(task.dueDate));
+        } else {
+          setDate(undefined);
         }
       } else {
         form.reset({
@@ -93,7 +95,7 @@ export function TaskModal({
           description: "",
           priority: "MEDIUM",
           status: "TODO",
-          dueDate: undefined,
+          dueDate: null,
           assignedUserIds: [],
         });
         setDate(undefined);
@@ -224,46 +226,61 @@ export function TaskModal({
 
           <div className="space-y-2">
             <Label>Prazo</Label>
-            <Popover>
-              <PopoverTrigger asChild>
+            <div className="flex gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "hover:text-white flex-1 justify-start text-left font-normal",
+                      !date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {date
+                      ? format(date, "PPP", { locale: ptBR })
+                      : "Selecione uma data"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={date}
+                    onSelect={(newDate) => {
+                      setDate(newDate);
+                      form.setValue(
+                        "dueDate",
+                        newDate ? newDate.toISOString() : null
+                      );
+                    }}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+              {date && (
                 <Button
+                  type="button"
                   variant="outline"
-                  className={cn(
-                    "hover:text-white w-full justify-start text-left font-normal",
-                    !date && "text-muted-foreground"
-                  )}
+                  size="icon"
+                  onClick={() => {
+                    setDate(undefined);
+                    form.setValue("dueDate", null);
+                  }}
+                  title="Remover prazo"
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date
-                    ? format(date, "PPP", { locale: ptBR })
-                    : "Selecione uma data"}
+                  <X className="h-4 w-4" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={date}
-                  onSelect={(newDate) => {
-                    setDate(newDate);
-                    form.setValue(
-                      "dueDate",
-                      newDate ? newDate.toISOString() : undefined
-                    );
-                  }}
-                  disabled={(date) => {
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return date < today;
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">
           <Label>Atribuir a</Label>
 
-          {/* Badges dos usuários selecionados */}
           {form.watch("assignedUserIds").length > 0 && (
             <div className="flex flex-wrap gap-2 p-2 border rounded-md bg-muted/50">
               {form.watch("assignedUserIds").map((userId) => {
@@ -291,7 +308,6 @@ export function TaskModal({
             </div>
           )}
 
-          {/* Lista de usuários com checkboxes */}
           <Popover>
             <PopoverTrigger asChild>
               <Button

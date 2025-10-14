@@ -38,7 +38,7 @@ export const taskSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"], {
     required_error: "Status é obrigatório",
   }),
-  dueDate: z.string().optional(),
+  dueDate: z.string().optional().nullable(),
   assignedUserIds: z
     .array(z.string())
     .min(1, { message: "Selecione pelo menos um usuário" }),

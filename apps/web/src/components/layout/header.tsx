@@ -73,7 +73,7 @@ export function Header() {
                 className="flex items-center gap-2 hover:opacity-80"
               >
                 <CheckCircle2 className="h-6 w-6 text-primary" />
-                <span className="text-xl font-semibold">TaskFlow</span>
+                <span className="text-xl font-semibold">JungleTask</span>
               </button>
             </div>
 
