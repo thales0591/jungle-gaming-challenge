@@ -31,9 +31,11 @@ export class TaskCommentController {
 
   @Get()
   async getPaginated(
+    @Param('id') taskId: string,
     @Query() { page, size }: GetPaginatedTaskCommentsQuery,
   ): Promise<TaskCommentResponse[]> {
     const tasks = await this.getPaginatedTaskCommentsUseCase.execute({
+      taskId: UniqueId.create(taskId),
       page,
       size,
     });

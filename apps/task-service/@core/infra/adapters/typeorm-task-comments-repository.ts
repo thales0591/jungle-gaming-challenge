@@ -32,6 +32,20 @@ export class TypeOrmTaskCommentsRepository extends TaskCommentRepository {
     return rows.map((r) => this.toDomain(r));
   }
 
+  async findManyByTaskId(
+    taskId: UniqueId,
+    page: number,
+    size: number,
+  ): Promise<TaskComment[]> {
+    const [rows] = await this.repository.findAndCount({
+      where: { taskId: taskId.value },
+      skip: (page - 1) * size,
+      take: size,
+      order: { createdAt: 'ASC' },
+    });
+    return rows.map((r) => this.toDomain(r));
+  }
+
   private toDomain(entity: TaskCommentEntity): TaskComment {
     return TaskComment.create(
       {
