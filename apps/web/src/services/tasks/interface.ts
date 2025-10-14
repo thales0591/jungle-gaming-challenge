@@ -55,8 +55,8 @@ export interface FetchTasksRequestData {
 export interface TaskComment {
   id: string;
   taskId: string;
-  authorName: string
-  authorEmail: string
+  authorName: string;
+  authorEmail: string;
   authorId: string;
   content: string;
   createdAt: string;
@@ -70,5 +70,36 @@ export interface Notification {
   message: string;
   taskId?: string;
   read: boolean;
+  createdAt: string;
+}
+
+export type TaskAuditAction =
+  | "CREATED"
+  | "UPDATED"
+  | "DELETED"
+  | "STATUS_CHANGED"
+  | "PRIORITY_CHANGED"
+  | "ASSIGNED_USER_ADDED"
+  | "ASSIGNED_USER_REMOVED"
+  | "DUE_DATE_CHANGED";
+
+export interface Change {
+  field: string;
+  newValue: string | null;
+  oldValue: string | null;
+}
+
+export interface AuditLogChanges {
+  changes: Change[];
+}
+
+export interface TaskAuditLog {
+  id: string;
+  taskId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  action: TaskAuditAction;
+  changes: AuditLogChanges;
   createdAt: string;
 }

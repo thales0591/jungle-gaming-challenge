@@ -25,17 +25,18 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { TaskModal } from "@/components/tasks/task-modal";
 import { CommentList } from "@/components/tasks/comment-list";
+import { HistoryList } from "@/components/tasks/history-list";
 import { ArrowLeft, Calendar, Pencil, Trash2, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn, getTaskDueDateStatus } from "@/lib/utils";
-import type { UserReadModel } from "@/services/tasks/interface";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createTaskCommentRequest,
   deleteTaskRequest,
   fetchSingleTaskRequest,
-  fetchTasksComments,
+  fetchTasksCommentsRequest,
+  fetchTasksAuditLogsRequest,
   updateTaskRequest,
 } from "@/services/tasks";
 import type { TaskFormData } from "@/lib/validations";
@@ -44,46 +45,6 @@ export const Route = createFileRoute("/tasks/$taskId/")({
   component: TaskDetailPage,
 });
 
-// Mock history data - TODO: Fetch from API
-interface TaskHistory {
-  id: string;
-  taskId: string;
-  userId: string;
-  user: UserReadModel;
-  action: string;
-  changes: Record<string, any>;
-  createdAt: string;
-}
-
-const mockHistory: TaskHistory[] = [
-  {
-    id: "1",
-    taskId: "1",
-    userId: "1",
-    user: { id: "1", name: "João Silva", email: "joao@example.com" },
-    action: "Alterou o status",
-    changes: { status: { from: "TODO", to: "IN_PROGRESS" } },
-    createdAt: "2025-01-12T15:30:00Z",
-  },
-  {
-    id: "2",
-    taskId: "1",
-    userId: "2",
-    user: { id: "2", name: "Maria Santos", email: "maria@example.com" },
-    action: "Adicionou comentário",
-    changes: {},
-    createdAt: "2025-01-12T14:20:00Z",
-  },
-  {
-    id: "3",
-    taskId: "1",
-    userId: "1",
-    user: { id: "1", name: "João Silva", email: "joao@example.com" },
-    action: "Criou a tarefa",
-    changes: {},
-    createdAt: "2025-01-10T10:00:00Z",
-  },
-];
 
 const statusConfig = {
   TODO: { label: "A Fazer", color: "bg-[#6b7280] text-white" },
@@ -117,7 +78,14 @@ function TaskDetailPage() {
   const { data: taskCommentsData = [], isLoading: isLoadingComments } =
     useQuery({
       queryKey: ["task", params.taskId, "comments"],
-      queryFn: () => fetchTasksComments(params.taskId),
+      queryFn: () => fetchTasksCommentsRequest(params.taskId),
+      enabled: !!params.taskId && isAuthenticated,
+    });
+
+  const { data: taskAuditLogsData = [], isLoading: isLoadingAuditLogs } =
+    useQuery({
+      queryKey: ["task", params.taskId, "audit-logs"],
+      queryFn: () => fetchTasksAuditLogsRequest(params.taskId),
       enabled: !!params.taskId && isAuthenticated,
     });
 
@@ -200,6 +168,7 @@ function TaskDetailPage() {
       description: "A tarefa foi atualizada.",
     });
     queryClient.invalidateQueries({ queryKey: ["task", params.taskId] });
+    queryClient.invalidateQueries({ queryKey: ["task", params.taskId, "audit-logs"] });
     queryClient.invalidateQueries({ queryKey: ["tasks"] });
   }
 
@@ -344,57 +313,10 @@ function TaskDetailPage() {
                   />
                 </TabsContent>
                 <TabsContent value="history" className="space-y-4">
-                  <div className="space-y-4">
-                    {mockHistory.map((item) => (
-                      <div key={item.id} className="flex gap-4">
-                        <div className="relative">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="text-xs">
-                              {item.user.name.slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          {item.id !==
-                            mockHistory[mockHistory.length - 1].id && (
-                            <div className="absolute left-4 top-8 bottom-0 w-px bg-border" />
-                          )}
-                        </div>
-                        <div className="flex-1 space-y-1 pb-4">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">
-                              {item.user.name}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {format(
-                                new Date(item.createdAt),
-                                "dd MMM 'às' HH:mm",
-                                { locale: ptBR }
-                              )}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {item.action}
-                          </p>
-                          {item.changes.status && (
-                            <div className="text-xs text-muted-foreground">
-                              {
-                                statusConfig[
-                                  item.changes.status
-                                    .from as keyof typeof statusConfig
-                                ].label
-                              }{" "}
-                              →{" "}
-                              {
-                                statusConfig[
-                                  item.changes.status
-                                    .to as keyof typeof statusConfig
-                                ].label
-                              }
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <HistoryList
+                    auditLogs={taskAuditLogsData}
+                    isLoading={isLoadingAuditLogs}
+                  />
                 </TabsContent>
               </Tabs>
             </div>

@@ -4,6 +4,7 @@ import type {
   FetchTasksRequestData,
   TaskComment,
   RichTask,
+  TaskAuditLog,
 } from "./interface";
 import api from "../api";
 
@@ -34,15 +35,15 @@ export const fetchTasksRequest = async (
   });
 
   if (requestData.status) {
-    params.append('status', requestData.status);
+    params.append("status", requestData.status);
   }
 
   if (requestData.priority) {
-    params.append('priority', requestData.priority);
+    params.append("priority", requestData.priority);
   }
 
   if (requestData.sortBy) {
-    params.append('sortBy', requestData.sortBy);
+    params.append("sortBy", requestData.sortBy);
   }
 
   const { data } = await api.get(`/task?${params.toString()}`);
@@ -72,9 +73,16 @@ export const deleteTaskRequest = async (taskId: string): Promise<void> => {
   return data;
 };
 
-export const fetchTasksComments = async (
+export const fetchTasksCommentsRequest = async (
   taskId: string
 ): Promise<TaskComment[]> => {
   const { data } = await api.get(`/task/${taskId}/comments`);
+  return data;
+};
+
+export const fetchTasksAuditLogsRequest = async (
+  taskId: string
+): Promise<TaskAuditLog[]> => {
+  const { data } = await api.get(`/task/${taskId}/audit-logs`);
   return data;
 };
