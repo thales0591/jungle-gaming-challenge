@@ -1,14 +1,11 @@
-import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { NotificationPanel } from "@/components/notifications/notification-panel";
@@ -16,25 +13,19 @@ import { useNotifications } from "@/hooks/use-notifications";
 import { useAuthStore } from "@/lib/store";
 import {
   CheckCircle2,
-  Search,
   Plus,
   LogOut,
-  User,
-  Settings,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   onNewTask?: () => void;
-  onSearch?: (query: string) => void;
-  searchQuery?: string;
 }
 
-export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
+export function Header({ onNewTask }: HeaderProps) {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [localSearch, setLocalSearch] = useState(searchQuery);
   const { notifications, markAsRead, markAllAsRead, deleteNotification } =
     useNotifications();
 
@@ -45,11 +36,6 @@ export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
       description: "Até logo!",
     });
     navigate({ to: "/" });
-  };
-
-  const handleSearchChange = (value: string) => {
-    setLocalSearch(value);
-    onSearch?.(value);
   };
 
   return (
@@ -64,16 +50,6 @@ export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
               <CheckCircle2 className="h-6 w-6 text-primary" />
               <span className="text-xl font-semibold">TaskFlow</span>
             </button>
-
-            <div className="relative hidden md:block w-80">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar tarefas..."
-                className="pl-9"
-                value={localSearch}
-                onChange={(e) => handleSearchChange(e.target.value)}
-              />
-            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -113,34 +89,12 @@ export function Header({ onNewTask, onSearch, searchQuery = "" }: HeaderProps) {
                     </p>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <User className="mr-2 h-4 w-4" />
-                  Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </div>
-
-        <div className="md:hidden mt-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar tarefas..."
-              className="pl-9"
-              value={localSearch}
-              onChange={(e) => handleSearchChange(e.target.value)}
-            />
           </div>
         </div>
       </div>

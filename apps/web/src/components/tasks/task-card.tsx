@@ -1,9 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Calendar, MessageSquare, MoreVertical, Pencil, Trash2 } from "lucide-react"
+import { Calendar } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
@@ -30,7 +28,7 @@ const priorityConfig = {
   URGENT: { label: "Urgente", color: "bg-[#ef4444] text-white" },
 }
 
-export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, onClick }: TaskCardProps) {
   const status = statusConfig[task.status]
   const priority = priorityConfig[task.priority]
 
@@ -61,34 +59,6 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
               <Badge className={cn("text-xs", priority.color)}>{priority.label}</Badge>
             </div>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit?.()
-                }}
-              >
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete?.()
-                }}
-                className="text-destructive"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </CardHeader>
 
@@ -106,10 +76,6 @@ export function TaskCard({ task, onClick, onEdit, onDelete }: TaskCardProps) {
               <span>{format(new Date(task.dueDate), "dd MMM", { locale: ptBR })}</span>
             </div>
           )}
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-4 w-4" />
-            <span>10</span>
-          </div>
         </div>
 
         <div className="flex items-center -space-x-2">

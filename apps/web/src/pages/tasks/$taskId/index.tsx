@@ -29,9 +29,16 @@ import { ArrowLeft, Calendar, Pencil, Trash2, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import type { UserReadModel } from "@/services/tasks/interface";
-import { useQuery } from "@tanstack/react-query";
-import { fetchSingleTaskRequest, fetchTasksComments } from "@/services/tasks";
+import type {
+  UserReadModel,
+} from "@/services/tasks/interface";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  fetchSingleTaskRequest,
+  fetchTasksComments,
+  updateTaskRequest,
+} from "@/services/tasks";
+import type { TaskFormData } from "@/lib/validations";
 
 export const Route = createFileRoute("/tasks/$taskId/")({
   component: TaskDetailPage,
@@ -99,6 +106,7 @@ function TaskDetailPage() {
   const { toast } = useToast();
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: taskData, isLoading: isLoadingTask } = useQuery({
     queryKey: ["task", params.taskId],
@@ -106,11 +114,12 @@ function TaskDetailPage() {
     enabled: !!params.taskId && isAuthenticated,
   });
 
-  const { data: taskCommentsData = [], isLoading: isLoadingComments } = useQuery({
-    queryKey: ["task", params.taskId, "comments"],
-    queryFn: () => fetchTasksComments(params.taskId),
-    enabled: !!params.taskId && isAuthenticated,
-  });
+  const { data: taskCommentsData = [], isLoading: isLoadingComments } =
+    useQuery({
+      queryKey: ["task", params.taskId, "comments"],
+      queryFn: () => fetchTasksComments(params.taskId),
+      enabled: !!params.taskId && isAuthenticated,
+    });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -142,6 +151,32 @@ function TaskDetailPage() {
       });
     }
   };
+
+  const updateTaskMutation = useMutation({
+    mutationFn: updateTaskRequest,
+    onError: () => {
+      toast({
+        title: "Erro ao atualizar tarefa",
+        description: "Ocorreu um erro inesperado, por favor, entre em contato com o suporte",
+        variant: "destructive",
+      });
+    },
+  });
+
+  async function handleEditTask(data: TaskFormData) {
+    console.log('upddata: ', JSON.stringify(data))
+    if (!taskData) return
+    await updateTaskMutation.mutateAsync({
+      taskId: taskData.id,
+      requestData: data
+    });
+    toast({
+      title: "Sucesso",
+      description: "A tarefa foi atualizada.",
+    });
+    queryClient.invalidateQueries({ queryKey: ["task", params.taskId] });
+    queryClient.invalidateQueries({ queryKey: ["tasks"] });
+  }
 
   if (!isAuthenticated) {
     return null;
@@ -191,253 +226,255 @@ function TaskDetailPage() {
   const priority = priorityConfig[taskData.priority];
 
   return (
-      <div className="min-h-screen bg-background">
-        <Header />
+    <div className="min-h-screen bg-background">
+      <Header />
 
-        <main className="container mx-auto px-4 py-6">
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate({ to: "/tasks" })}
-                className="gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Voltar
-              </Button>
-              <span>/</span>
-              <span>Tarefas</span>
-              <span>/</span>
-              <span className="text-foreground">{taskData.title}</span>
-            </div>
+      <main className="container mx-auto px-4 py-6">
+        <div className="space-y-6">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate({ to: "/tasks" })}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar
+            </Button>
+            <span>/</span>
+            <span>Tarefas</span>
+            <span>/</span>
+            <span className="text-foreground">{taskData.title}</span>
+          </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-3 flex-1">
-                      <h1 className="text-3xl font-bold tracking-tight text-balance">
-                        {taskData.title}
-                      </h1>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={cn("text-xs", status.color)}>
-                          {status.label}
-                        </Badge>
-                        <Badge className={cn("text-xs", priority.color)}>
-                          {priority.label}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEditModalOpen(true)}
-                        className="gap-2"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setDeleteDialogOpen(true)}
-                        className="gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Excluir
-                      </Button>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-3 flex-1">
+                    <h1 className="text-3xl font-bold tracking-tight text-balance">
+                      {taskData.title}
+                    </h1>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={cn("text-xs", status.color)}>
+                        {status.label}
+                      </Badge>
+                      <Badge className={cn("text-xs", priority.color)}>
+                        {priority.label}
+                      </Badge>
                     </div>
                   </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h2 className="text-lg font-semibold">Descrição</h2>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {taskData.description || "Nenhuma descrição fornecida."}
-                    </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setEditModalOpen(true)}
+                      className="gap-2"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      className="gap-2"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Excluir
+                    </Button>
                   </div>
                 </div>
 
-                <Tabs defaultValue="comments" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="comments">
-                      Comentários ({taskCommentsData.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="history">Histórico</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="comments" className="space-y-4">
-                    <CommentList
-                      taskId={taskData.id}
-                      comments={taskCommentsData}
-                      isLoading={isLoadingComments}
-                      onAddComment={handleAddComment}
-                    />
-                  </TabsContent>
-                  <TabsContent value="history" className="space-y-4">
-                    <div className="space-y-4">
-                      {mockHistory.map((item) => (
-                        <div key={item.id} className="flex gap-4">
-                          <div className="relative">
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {item.user.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            {item.id !== mockHistory[mockHistory.length - 1].id && (
-                              <div className="absolute left-4 top-8 bottom-0 w-px bg-border" />
-                            )}
+                <Separator />
+
+                <div className="space-y-4">
+                  <h2 className="text-lg font-semibold">Descrição</h2>
+                  <p className="text-muted-foreground leading-relaxed">
+                    {taskData.description || "Nenhuma descrição fornecida."}
+                  </p>
+                </div>
+              </div>
+
+              <Tabs defaultValue="comments" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="comments">
+                    Comentários ({taskCommentsData.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="history">Histórico</TabsTrigger>
+                </TabsList>
+                <TabsContent value="comments" className="space-y-4">
+                  <CommentList
+                    taskId={taskData.id}
+                    comments={taskCommentsData}
+                    isLoading={isLoadingComments}
+                    onAddComment={handleAddComment}
+                  />
+                </TabsContent>
+                <TabsContent value="history" className="space-y-4">
+                  <div className="space-y-4">
+                    {mockHistory.map((item) => (
+                      <div key={item.id} className="flex gap-4">
+                        <div className="relative">
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs">
+                              {item.user.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          {item.id !==
+                            mockHistory[mockHistory.length - 1].id && (
+                            <div className="absolute left-4 top-8 bottom-0 w-px bg-border" />
+                          )}
+                        </div>
+                        <div className="flex-1 space-y-1 pb-4">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              {item.user.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {format(
+                                new Date(item.createdAt),
+                                "dd MMM 'às' HH:mm",
+                                { locale: ptBR }
+                              )}
+                            </span>
                           </div>
-                          <div className="flex-1 space-y-1 pb-4">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {item.user.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {format(
-                                  new Date(item.createdAt),
-                                  "dd MMM 'às' HH:mm",
-                                  { locale: ptBR }
-                                )}
-                              </span>
+                          <p className="text-sm text-muted-foreground">
+                            {item.action}
+                          </p>
+                          {item.changes.status && (
+                            <div className="text-xs text-muted-foreground">
+                              {
+                                statusConfig[
+                                  item.changes.status
+                                    .from as keyof typeof statusConfig
+                                ].label
+                              }{" "}
+                              →{" "}
+                              {
+                                statusConfig[
+                                  item.changes.status
+                                    .to as keyof typeof statusConfig
+                                ].label
+                              }
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {item.action}
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-lg border bg-card p-6 space-y-4">
+                <h3 className="font-semibold">Detalhes</h3>
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Prazo</p>
+                      <p className="text-sm text-muted-foreground">
+                        {taskData.dueDate
+                          ? format(new Date(taskData.dueDate), "PPP", {
+                              locale: ptBR,
+                            })
+                          : "Sem prazo definido"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Criada em</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(taskData.createdAt), "PPP", {
+                          locale: ptBR,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">Atualizada em</p>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(taskData.updatedAt), "PPP", {
+                          locale: ptBR,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <User className="h-5 w-5 text-muted-foreground" />
+                      <p className="text-sm font-medium">Atribuído a</p>
+                    </div>
+                    <div className="space-y-4">
+                      {taskData.assignedUsers.map((assignedUser) => (
+                        <div
+                          key={assignedUser.id}
+                          className="flex items-center gap-2"
+                        >
+                          <Avatar className="h-8 w-8">
+                            <AvatarFallback className="text-xs">
+                              {assignedUser.name.slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {assignedUser.name}
                             </p>
-                            {item.changes.status && (
-                              <div className="text-xs text-muted-foreground">
-                                {
-                                  statusConfig[
-                                    item.changes.status
-                                      .from as keyof typeof statusConfig
-                                  ].label
-                                }{" "}
-                                →{" "}
-                                {
-                                  statusConfig[
-                                    item.changes.status
-                                      .to as keyof typeof statusConfig
-                                  ].label
-                                }
-                              </div>
-                            )}
+                            <p className="text-xs text-muted-foreground">
+                              {assignedUser.email}
+                            </p>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-
-              <div className="space-y-6">
-                <div className="rounded-lg border bg-card p-6 space-y-4">
-                  <h3 className="font-semibold">Detalhes</h3>
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                      <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Prazo</p>
-                        <p className="text-sm text-muted-foreground">
-                          {taskData.dueDate
-                            ? format(new Date(taskData.dueDate), "PPP", {
-                                locale: ptBR,
-                              })
-                            : "Sem prazo definido"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Criada em</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(taskData.createdAt), "PPP", {
-                            locale: ptBR,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                      <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">Atualizada em</p>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(taskData.updatedAt), "PPP", {
-                            locale: ptBR,
-                          })}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-muted-foreground" />
-                        <p className="text-sm font-medium">Atribuído a</p>
-                      </div>
-                      <div className="space-y-2">
-                        {taskData.assignedUsers.map((assignedUser) => (
-                          <div
-                            key={assignedUser.id}
-                            className="flex items-center gap-2"
-                          >
-                            <Avatar className="h-8 w-8">
-                              <AvatarFallback className="text-xs">
-                                {assignedUser.name.slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium">
-                                {assignedUser.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {assignedUser.email}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </main>
+        </div>
+      </main>
 
-        <TaskModal
-          open={editModalOpen}
-          onOpenChange={setEditModalOpen}
-          task={taskData}
-        />
+      <TaskModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        task={taskData}
+        onSave={handleEditTask}
+      />
 
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta ação não pode ser desfeita. A tarefa será permanentemente
-                excluída.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground"
-              >
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    );
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. A tarefa será permanentemente
+              excluída.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
