@@ -41,22 +41,29 @@ export class TypeOrmTaskRepository extends TaskRepository {
   }
 
   async update(task: Task): Promise<void> {
+    const existingTask = await this.repository.findOne({
+      where: { id: task.id.value },
+      relations: ['assignedUsers'],
+    });
+
+    if (!existingTask) {
+      throw new DomainException(`Task ${task.id.value} not found`);
+    }
+
     const userIds = task.assignedUserIds.map((id) => id.value);
     const assignedUsers = userIds.length
       ? await this.userRepository.find({ where: { id: In(userIds) } })
       : [];
 
-    await this.repository.update(task.id.value, {
-      id: task.id.value,
-      title: task.title,
-      description: task.description,
-      dueDate: task.dueDate,
-      priority: task.priority,
-      status: task.status,
-      createdAt: task.createdAt,
-      updatedAt: task.updatedAt ?? new Date(),
-      assignedUsers,
-    });
+    existingTask.title = task.title;
+    existingTask.description = task.description;
+    existingTask.dueDate = task.dueDate;
+    existingTask.priority = task.priority;
+    existingTask.status = task.status;
+    existingTask.assignedUsers = assignedUsers;
+    existingTask.updatedAt = task.updatedAt ?? new Date();
+
+    await this.repository.save(existingTask);
   }
 
   async findManyWithUsers(
@@ -68,8 +75,7 @@ export class TypeOrmTaskRepository extends TaskRepository {
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.assignedUsers', 'assignedUser')
       .leftJoin('task.assignedUsers', 'user')
-      .where('task.authorId = :userId', { userId })
-      .orWhere('user.id = :userId', { userId })
+      .where('(task.authorId = :userId OR user.id = :userId)', { userId })
       .orderBy('task.createdAt', 'DESC')
       .skip((page - 1) * size)
       .take(size)

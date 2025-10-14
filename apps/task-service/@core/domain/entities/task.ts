@@ -127,6 +127,10 @@ export class Task extends AggregateRoot<TaskProps> {
     if (fields.priority) this.setPriority(fields.priority);
     if (fields.status) this.setStatus(fields.status);
     if (fields.authorId) this.setAuthorId(fields.authorId);
+    if (fields.assignedUserIds !== undefined) {
+      this.props.assignedUserIds = fields.assignedUserIds;
+    }
+    this.touch();
   }
 
   assignUser(userId: UniqueId) {
