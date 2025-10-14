@@ -139,93 +139,107 @@ export function HistoryList({ auditLogs, isLoading }: HistoryListProps) {
                 </span>
                 <span className="text-xs text-muted-foreground">•</span>
                 <span className="text-xs text-muted-foreground">
-                  {format(
-                    new Date(log.createdAt),
-                    "dd MMM 'às' HH:mm",
-                    { locale: ptBR }
-                  )}
+                  {format(new Date(log.createdAt), "dd MMM 'às' HH:mm", {
+                    locale: ptBR,
+                  })}
                 </span>
               </div>
 
-              {log.changes?.changes && log.changes.changes.length > 0 && (
-                <div className="space-y-2">
-                  {log.changes.changes.map((change, changeIndex) => {
-                    const isTextLong = isLongText(change.oldValue) || isLongText(change.newValue);
-                    const isStatus = change.field === "status";
-                    const isPriority = change.field === "priority";
+              {log.action !== "CREATED" &&
+                log.changes?.changes &&
+                log.changes.changes.length > 0 && (
+                  <div className="space-y-2">
+                    {log.changes.changes.map((change, changeIndex) => {
+                      const isTextLong =
+                        isLongText(change.oldValue) ||
+                        isLongText(change.newValue);
+                      const isStatus = change.field === "status";
+                      const isPriority = change.field === "priority";
 
-                    return (
-                      <div
-                        key={changeIndex}
-                        className="text-sm bg-muted/50 rounded-md px-3 py-2.5 space-y-2"
-                      >
-                        <div className="font-medium text-foreground text-xs uppercase tracking-wide text-muted-foreground">
-                          {fieldLabels[change.field] || change.field}
+                      return (
+                        <div
+                          key={changeIndex}
+                          className="text-sm bg-muted/50 rounded-md px-3 py-2.5 space-y-2"
+                        >
+                          <div className="font-medium text-foreground text-xs uppercase tracking-wide">
+                            {fieldLabels[change.field] || change.field}
+                          </div>
+
+                          {isTextLong ? (
+                            <div className="space-y-2">
+                              {change.oldValue && (
+                                <div className="space-y-1">
+                                  <div className="text-xs text-muted-foreground font-medium">
+                                    Anterior:
+                                  </div>
+                                  <div className="bg-red-500/10 border border-red-500/20 rounded p-2 text-foreground/80 line-through decoration-red-500/50">
+                                    {change.oldValue}
+                                  </div>
+                                </div>
+                              )}
+                              {change.newValue && (
+                                <div className="space-y-1">
+                                  <div className="text-xs text-muted-foreground font-medium">
+                                    Novo:
+                                  </div>
+                                  <div className="bg-green-500/10 border border-green-500/20 rounded p-2 text-foreground font-medium">
+                                    {change.newValue}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : isStatus ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {change.oldValue && (
+                                <Badge
+                                  className={`${statusColors[change.oldValue]} text-white opacity-60`}
+                                >
+                                  {formatValue(change.field, change.oldValue)}
+                                </Badge>
+                              )}
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                              {change.newValue && (
+                                <Badge
+                                  className={`${statusColors[change.newValue]} text-white`}
+                                >
+                                  {formatValue(change.field, change.newValue)}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : isPriority ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {change.oldValue && (
+                                <Badge
+                                  className={`${priorityColors[change.oldValue]} text-white opacity-60`}
+                                >
+                                  {formatValue(change.field, change.oldValue)}
+                                </Badge>
+                              )}
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                              {change.newValue && (
+                                <Badge
+                                  className={`${priorityColors[change.newValue]} text-white`}
+                                >
+                                  {formatValue(change.field, change.newValue)}
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-foreground/60 line-through decoration-red-500/50">
+                                {formatValue(change.field, change.oldValue)}
+                              </span>
+                              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-foreground font-medium">
+                                {formatValue(change.field, change.newValue)}
+                              </span>
+                            </div>
+                          )}
                         </div>
-
-                        {isTextLong ? (
-                          <div className="space-y-2">
-                            {change.oldValue && (
-                              <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground font-medium">Anterior:</div>
-                                <div className="bg-red-500/10 border border-red-500/20 rounded p-2 text-foreground/80 line-through decoration-red-500/50">
-                                  {change.oldValue}
-                                </div>
-                              </div>
-                            )}
-                            {change.newValue && (
-                              <div className="space-y-1">
-                                <div className="text-xs text-muted-foreground font-medium">Novo:</div>
-                                <div className="bg-green-500/10 border border-green-500/20 rounded p-2 text-foreground font-medium">
-                                  {change.newValue}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        ) : isStatus ? (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {change.oldValue && (
-                              <Badge className={`${statusColors[change.oldValue]} text-white opacity-60`}>
-                                {formatValue(change.field, change.oldValue)}
-                              </Badge>
-                            )}
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            {change.newValue && (
-                              <Badge className={`${statusColors[change.newValue]} text-white`}>
-                                {formatValue(change.field, change.newValue)}
-                              </Badge>
-                            )}
-                          </div>
-                        ) : isPriority ? (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {change.oldValue && (
-                              <Badge className={`${priorityColors[change.oldValue]} text-white opacity-60`}>
-                                {formatValue(change.field, change.oldValue)}
-                              </Badge>
-                            )}
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            {change.newValue && (
-                              <Badge className={`${priorityColors[change.newValue]} text-white`}>
-                                {formatValue(change.field, change.newValue)}
-                              </Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-foreground/60 line-through decoration-red-500/50">
-                              {formatValue(change.field, change.oldValue)}
-                            </span>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-foreground font-medium">
-                              {formatValue(change.field, change.newValue)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
             </div>
           </div>
         ))}
