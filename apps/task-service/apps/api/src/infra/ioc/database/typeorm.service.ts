@@ -2,9 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { ITypeOrm } from '@core/infra/typeorm-client';
-import { UserReadModelEntity } from '../../../../../../@core/infra/entities/user-read-model.entity';
-import { TaskEntity } from '../../../../../../@core/infra/entities/task.entity';
-import { TaskCommentEntity } from '../../../../../../@core/infra/entities/task-comment.entity';
+import {
+  TaskEntity,
+  TaskAuditLogEntity,
+  TaskCommentEntity,
+  UserReadModelEntity,
+} from '../../../../../../@core/infra/entities';
 
 @Injectable()
 export class TypeOrmService extends ITypeOrm {
@@ -21,7 +24,12 @@ export class TypeOrmService extends ITypeOrm {
       password: config.getOrThrow('POSTGRES_PASSWORD'),
       database: config.getOrThrow('POSTGRES_DB'),
       synchronize: false,
-      entities: [UserReadModelEntity, TaskEntity, TaskCommentEntity],
+      entities: [
+        UserReadModelEntity,
+        TaskEntity,
+        TaskCommentEntity,
+        TaskAuditLogEntity,
+      ],
     });
   }
 

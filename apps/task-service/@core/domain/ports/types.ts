@@ -1,5 +1,6 @@
 import { Task, TaskPriority, TaskStatus } from '@core/domain/entities/task';
 import { TaskComment } from '@core/domain/entities/task-comment';
+import { TaskAuditLog } from '@core/domain/entities/task-audit-log';
 
 export interface DomainTaskWithUsers {
   task: Task;
@@ -18,6 +19,15 @@ export interface DomainTaskWithUsers {
 export interface TaskCommentWithAuthor {
   comment: TaskComment;
   author: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface TaskAuditLogWithUser {
+  auditLog: TaskAuditLog;
+  user: {
     id: string;
     name: string;
     email: string;

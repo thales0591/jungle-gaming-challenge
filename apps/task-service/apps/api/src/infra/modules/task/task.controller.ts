@@ -5,6 +5,7 @@ import {
   GetPaginatedTasksUseCase,
   UpdateTaskUseCase,
 } from '@core/application/usecases';
+import { GetTaskAuditLogsUseCase } from '@core/application/usecases/get-task-audit-logs';
 import {
   Body,
   Controller,
@@ -22,6 +23,7 @@ import { GetPaginatedTasksQuery } from './dtos/get-paginated-tasks.request';
 import { UpdateTaskRequest } from './dtos/update-task.request';
 import { LoggedUserId } from '../../decorators/logged-user.decorator';
 import { TaskWithUsersResponse } from './dtos/task-with-user.response';
+import { TaskAuditLogResponse } from './dtos/task-audit-log.response';
 
 @Controller('task')
 export class TaskController {
@@ -31,6 +33,7 @@ export class TaskController {
     private readonly getPaginatedTasksUseCase: GetPaginatedTasksUseCase,
     private readonly deleteTaskUseCase: DeleteTaskUseCase,
     private readonly updateTaskUseCase: UpdateTaskUseCase,
+    private readonly getTaskAuditLogsUseCase: GetTaskAuditLogsUseCase,
   ) {}
 
   @Post()
@@ -111,5 +114,19 @@ export class TaskController {
   @Delete(':id')
   async delete(@Param('id') id: string): Promise<void> {
     await this.deleteTaskUseCase.execute(UniqueId.create(id));
+  }
+
+  @Get(':id/audit-logs')
+  async getAuditLogs(
+    @Param('id') id: string,
+    @Query('page') page: number = 1,
+    @Query('size') size: number = 10,
+  ): Promise<TaskAuditLogResponse[]> {
+    const auditLogs = await this.getTaskAuditLogsUseCase.execute({
+      taskId: UniqueId.create(id),
+      page,
+      size,
+    });
+    return auditLogs.map(TaskAuditLogResponse.from);
   }
 }

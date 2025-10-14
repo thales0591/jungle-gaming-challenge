@@ -6,6 +6,8 @@ import { TypeOrmUserReadModelRepository } from '@core/infra/adapters/typeorm-use
 import { TypeOrmTaskRepository } from '@core/infra/adapters/typeorm-task-repository';
 import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
 import { TypeOrmTaskCommentsRepository } from '@core/infra/adapters/typeorm-task-comments-repository';
+import { TaskAuditLogRepository } from '@core/domain/ports/task-audit-log-repository';
+import { TypeOrmTaskAuditLogRepository } from '@core/infra/adapters/typeorm-task-audit-log-repository';
 
 @Module({
   providers: [
@@ -33,8 +35,21 @@ import { TypeOrmTaskCommentsRepository } from '@core/infra/adapters/typeorm-task
         return new TypeOrmTaskCommentsRepository(orm);
       },
       inject: [ITypeOrm],
-    },    
+    },
+    {
+      provide: TaskAuditLogRepository,
+      useFactory: (orm: ITypeOrm) => {
+        return new TypeOrmTaskAuditLogRepository(orm);
+      },
+      inject: [ITypeOrm],
+    },
   ],
-  exports: [TaskRepository, UserReadModelRepository, TaskCommentRepository, ITypeOrm],
+  exports: [
+    TaskRepository,
+    UserReadModelRepository,
+    TaskCommentRepository,
+    TaskAuditLogRepository,
+    ITypeOrm,
+  ],
 })
 export class DatabaseModule {}

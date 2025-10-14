@@ -19,7 +19,7 @@ export class CreateTaskRequest {
   description: string;
 
   @IsOptional()
-  dueDate?: Date | null;
+  dueDate?: string | null;
 
   @IsEnum(TaskPriority)
   @IsNotEmpty()

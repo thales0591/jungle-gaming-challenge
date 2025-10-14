@@ -7,10 +7,12 @@ import {
   GetPaginatedTasksUseCase,
   UpdateTaskUseCase,
 } from '@core/application/usecases';
+import { GetTaskAuditLogsUseCase } from '@core/application/usecases/get-task-audit-logs';
 import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { Module } from '@nestjs/common';
 import { DatabaseModule } from '../database/database.module';
 import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
+import { TaskAuditLogRepository } from '@core/domain/ports/task-audit-log-repository';
 import { MessagingModule } from '../../messaging/messaging.module';
 import { EventPublisher } from '@core/application/ports/event-publisher';
 
@@ -23,10 +25,16 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
         taskRepository: TaskRepository,
         userReadModelRepository: UserReadModelRepository,
         eventPublisher: EventPublisher,
+        taskAuditLogRepository: TaskAuditLogRepository,
       ) => {
-        return new CreateTaskUseCase(taskRepository, userReadModelRepository, eventPublisher);
+        return new CreateTaskUseCase(
+          taskRepository,
+          userReadModelRepository,
+          eventPublisher,
+          taskAuditLogRepository,
+        );
       },
-      inject: [TaskRepository, UserReadModelRepository, EventPublisher],
+      inject: [TaskRepository, UserReadModelRepository, EventPublisher, TaskAuditLogRepository],
     },
     {
       provide: DeleteTaskUseCase,
@@ -51,10 +59,14 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
     },
     {
       provide: UpdateTaskUseCase,
-      useFactory: (taskRepository: TaskRepository, eventPublisher: EventPublisher) => {
-        return new UpdateTaskUseCase(taskRepository, eventPublisher);
+      useFactory: (
+        taskRepository: TaskRepository,
+        eventPublisher: EventPublisher,
+        taskAuditLogRepository: TaskAuditLogRepository,
+      ) => {
+        return new UpdateTaskUseCase(taskRepository, eventPublisher, taskAuditLogRepository);
       },
-      inject: [TaskRepository, EventPublisher],
+      inject: [TaskRepository, EventPublisher, TaskAuditLogRepository],
     },
     {
       provide: GetPaginatedTaskCommentsUseCase,
@@ -80,6 +92,13 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
       },
       inject: [TaskCommentRepository, UserReadModelRepository, TaskRepository, EventPublisher],
     },
+    {
+      provide: GetTaskAuditLogsUseCase,
+      useFactory: (taskAuditLogRepository: TaskAuditLogRepository) => {
+        return new GetTaskAuditLogsUseCase(taskAuditLogRepository);
+      },
+      inject: [TaskAuditLogRepository],
+    },
   ],
   exports: [
     CreateTaskUseCase,
@@ -89,6 +108,7 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
     UpdateTaskUseCase,
     CreateTaskCommentUseCase,
     GetPaginatedTaskCommentsUseCase,
+    GetTaskAuditLogsUseCase,
   ],
 })
 export class UseCasesModule {}
