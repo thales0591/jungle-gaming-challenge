@@ -1,9 +1,10 @@
 import { UniqueId } from '@core/domain/value-objects/unique-id';
 import { TaskRepository, UserReadModelRepository } from '@core/domain/ports';
 import { NotFoundException } from '@nestjs/common';
-import { TaskComment } from '@core/domain/entities/task-comment';
 import { TaskCommentRepository } from '@core/domain/ports/task-comments-repository';
 import { EventPublisher } from '../ports/event-publisher';
+import { TaskCommentWithAuthor } from '@core/domain/ports/types';
+import { TaskComment } from '@core/domain/entities/task-comment';
 
 export interface CreateTaskCommentProps {
   taskId: UniqueId;
@@ -23,7 +24,7 @@ export class CreateTaskCommentUseCase {
     taskId,
     authorId,
     content,
-  }: CreateTaskCommentProps): Promise<TaskComment> {
+  }: CreateTaskCommentProps): Promise<TaskCommentWithAuthor> {
     const user = await this.userReadModelRepository.findById(authorId);
 
     if (!user) {
@@ -33,9 +34,9 @@ export class CreateTaskCommentUseCase {
     const richTask = await this.taskRepository.findById(taskId);
 
     if (!richTask) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Task not found');
     }
-    
+
     const task = richTask.task
 
     const taskComment = TaskComment.create({
@@ -56,6 +57,13 @@ export class CreateTaskCommentUseCase {
       taskAssignedUserIds: task.assignedUserIds.map(id => id.toString()),
     });
 
-    return taskComment;
+    return {
+      comment: taskComment,
+      author: {
+        id: user.id.value,
+        name: user.name,
+        email: user.email,
+      },
+    };
   }
 }

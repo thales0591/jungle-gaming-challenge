@@ -14,7 +14,7 @@ export class UserListener {
     await this.userReadModelRepository.save({
       id: UniqueId.create(payload.id),
       email: payload.email,
-      name: payload.email,
+      name: payload.name,
       createdAt: payload.createdAt
     });
   }

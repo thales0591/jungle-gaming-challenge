@@ -1,5 +1,6 @@
 import { TaskComment } from '../entities/task-comment';
 import { UniqueId } from '../value-objects/unique-id';
+import { TaskCommentWithAuthor } from './types';
 
 export abstract class TaskCommentRepository {
   abstract create(entity: TaskComment): Promise<void>;
@@ -9,4 +10,9 @@ export abstract class TaskCommentRepository {
     page: number,
     size: number,
   ): Promise<TaskComment[]>;
+  abstract findManyByTaskIdWithAuthor(
+    taskId: UniqueId,
+    page: number,
+    size: number,
+  ): Promise<TaskCommentWithAuthor[]>;
 }
