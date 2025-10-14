@@ -4,12 +4,9 @@ import { useAuthStore } from "@/lib/store";
 import { Header } from "@/components/layout/header";
 import { TaskCard } from "@/components/tasks/task-card";
 import { TaskSkeleton } from "@/components/tasks/task-skeleton";
-import { TaskModal } from "@/components/tasks/task-modal";
 import { AlertCircle } from "lucide-react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createTaskRequest, fetchTasksRequest } from "@/services/tasks";
-import type { TaskFormData } from "@/lib/validations";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { fetchTasksRequest } from "@/services/tasks";
 
 export const Route = createFileRoute("/tasks/")({
   component: TasksPage,
@@ -19,9 +16,6 @@ function TasksPage() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: tasksData } = useQuery({
     queryKey: ["tasks"],
@@ -43,40 +37,13 @@ function TasksPage() {
     }, 1000);
   }, [isAuthenticated, navigate]);
 
-  const handleNewTask = () => {
-    setIsCreateTaskModalOpen(true);
-  };
-
-  const createTaskMutatiton = useMutation({
-    mutationFn: createTaskRequest,
-    onError: () => {
-      toast({
-        title: "Erro ao criar task",
-        description:
-          "Ocorreu um erro inesperado, por favor entre em contato com o suporte.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  async function handleCreateTask(data: TaskFormData) {
-    await createTaskMutatiton.mutateAsync(data);
-    toast({
-      title: "Tarefa criada com sucesso!",
-      description: "As pessoas atribuídas serão notificadas.",
-    });
-    queryClient.invalidateQueries({ queryKey: ["tasks"] });
-  }
-
   if (!isAuthenticated) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-background">
-      <Header
-        onNewTask={handleNewTask}
-      />
+      <Header />
 
       <main className="container mx-auto px-4 py-6">
         <div className="space-y-6">
@@ -115,8 +82,6 @@ function TasksPage() {
                         params: { taskId: task.id },
                       })
                     }
-                    //onEdit={() => handleEditTask(task)}
-                    onDelete={() => console.log("Delete", task.id)}
                   />
                 ))}
               </div>
@@ -130,12 +95,6 @@ function TasksPage() {
           )}
         </div>
       </main>
-
-      <TaskModal
-        open={isCreateTaskModalOpen}
-        onOpenChange={setIsCreateTaskModalOpen}
-        onSave={handleCreateTask}
-      />
     </div>
   );
 }

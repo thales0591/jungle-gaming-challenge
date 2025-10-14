@@ -10,8 +10,6 @@ import type { RichTask } from "@/services/tasks/interface"
 interface TaskCardProps {
   task: RichTask
   onClick?: () => void
-  onEdit?: () => void
-  onDelete?: () => void
 }
 
 const statusConfig = {
