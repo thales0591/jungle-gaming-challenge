@@ -31,13 +31,13 @@ export class RefreshTokenUseCase {
     if (!user) throw new UnauthorizedException('Refresh token revoked');
 
     const newAccessToken = await this.tokenManager.generate({
-      payload: { userId: user.id },
+      payload: { userId: user.id.value },
       secret: Environment.auth.secret,
       expiresAt: this.getSessionExpiration(),
     });
 
     const newRefreshToken = await this.tokenManager.generate({
-      payload: { userId: user.id },
+      payload: { userId: user.id.value },
       secret: Environment.auth.refreshSecret,
       expiresAt: this.getRefreshSessionExpiration(),
     });
