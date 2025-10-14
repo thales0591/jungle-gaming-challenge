@@ -100,6 +100,18 @@ export class Task extends AggregateRoot<TaskProps> {
   }
 
   setDueDate(date: Date | null) {
+    if (date !== null) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = new Date(date);
+      dueDate.setHours(0, 0, 0, 0);
+
+      if (dueDate < today) {
+        throw new DomainException(
+          'Due date cannot be in the past. Please select today or a future date.',
+        );
+      }
+    }
     this.props.dueDate = date;
     this.touch();
   }

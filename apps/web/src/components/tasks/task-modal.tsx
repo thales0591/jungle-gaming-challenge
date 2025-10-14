@@ -250,7 +250,11 @@ export function TaskModal({
                       newDate ? newDate.toISOString() : undefined
                     );
                   }}
-                  initialFocus
+                  disabled={(date) => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return date < today;
+                  }}
                 />
               </PopoverContent>
             </Popover>
