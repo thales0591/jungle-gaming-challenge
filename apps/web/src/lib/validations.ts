@@ -27,11 +27,7 @@ export const taskSchema = z.object({
   description: z
     .string()
     .max(500, "Descrição deve ter no máximo 500 caracteres")
-    .min(10, { message: "Descrição deve ter no mínimo 10 caracteres" })
-    .refine(
-      (val) => !val || val.trim().length === 0 || val.trim().length >= 10,
-      "Descrição deve ter no mínimo 10 caracteres"
-    ),
+    .min(1, { message: "Descrição deve ter no mínimo 1 caractere" }),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"], {
     required_error: "Prioridade é obrigatória",
   }),
