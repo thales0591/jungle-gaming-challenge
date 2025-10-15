@@ -26,12 +26,14 @@ export class TaskEventsListener {
 
     const usersToNotify = new Set<string>();
     usersToNotify.add(payload.authorId);
-    payload.assignedUserIds?.forEach((userId: string) => usersToNotify.add(userId));
+    payload.assignedUserIds?.forEach((userId: string) =>
+      usersToNotify.add(userId),
+    );
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
 
-    this.notificationsGateway.emitToUsers(userIds, 'task.created', eventData);
+    this.notificationsGateway.emitToUsers(userIds, 'task:created', eventData);
   }
 
   @EventPattern('task.updated')
@@ -52,12 +54,14 @@ export class TaskEventsListener {
 
     const usersToNotify = new Set<string>();
     usersToNotify.add(payload.authorId);
-    payload.assignedUserIds?.forEach((userId: string) => usersToNotify.add(userId));
+    payload.assignedUserIds?.forEach((userId: string) =>
+      usersToNotify.add(userId),
+    );
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
 
-    this.notificationsGateway.emitToUsers(userIds, 'task.updated', eventData);
+    this.notificationsGateway.emitToUsers(userIds, 'task:updated', eventData);
   }
 
   @EventPattern('comment.new')
@@ -67,7 +71,8 @@ export class TaskEventsListener {
     const eventData = {
       id: payload.id,
       taskId: payload.taskId,
-      authorId: payload.authorId,
+      taskTitle: payload.taskTitle,
+      user: payload.user,
       content: payload.content,
       createdAt: payload.createdAt,
     };
@@ -75,11 +80,13 @@ export class TaskEventsListener {
     const usersToNotify = new Set<string>();
     usersToNotify.add(payload.taskAuthorId);
     usersToNotify.add(payload.authorId);
-    payload.taskAssignedUserIds?.forEach((userId: string) => usersToNotify.add(userId));
+    payload.taskAssignedUserIds?.forEach((userId: string) =>
+      usersToNotify.add(userId),
+    );
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
 
-    this.notificationsGateway.emitToUsers(userIds, 'comment.new', eventData);
+    this.notificationsGateway.emitToUsers(userIds, 'comment:new', eventData);
   }
 }

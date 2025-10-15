@@ -14,7 +14,9 @@ interface JwtPayload {
 
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: ['*'],
+    credentials: true,
+    methods: ['GET', 'POST'],
   },
 })
 export class NotificationsGateway
@@ -74,19 +76,14 @@ export class NotificationsGateway
   }
 
   emitToAll(event: string, data: any) {
-    this.logger.log(`Emitting event ${event} to all clients`);
     this.server.emit(event, data);
   }
 
   emitToUser(userId: string, event: string, data: any) {
-    this.logger.log(`Emitting event ${event} to user ${userId}`);
     this.server.to(userId).emit(event, data);
   }
 
   emitToUsers(userIds: string[], event: string, data: any) {
-    this.logger.log(
-      `Emitting event ${event} to ${userIds.length} users: ${userIds.join(', ')}`,
-    );
     userIds.forEach((userId) => {
       this.server.to(userId).emit(event, JSON.stringify(data));
     });

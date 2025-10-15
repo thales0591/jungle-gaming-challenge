@@ -1,20 +1,23 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
-export class RmqService {
+export class RmqService implements OnModuleInit {
+
   constructor(
     @Inject('RABBITMQ_CLIENT')
     private readonly client: ClientProxy,
   ) {}
 
-  async emit(pattern: string, payload: any) {
+  async onModuleInit() {
     await this.client.connect();
+  }
+
+  async emit(pattern: string, payload: any) {
     return this.client.emit(pattern, payload);
   }
 
   async send<TResult, TInput>(pattern: string, data: TInput) {
-    await this.client.connect();
     return this.client.send<TResult, TInput>(pattern, data);
   }
 }

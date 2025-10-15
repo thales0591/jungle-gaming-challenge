@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { RmqService } from './rmq.service';
 import { EventPublisher } from '@core/application/ports/event-publisher';
 
@@ -8,7 +8,7 @@ export class EventPublisherAdapter extends EventPublisher {
     super();
   }
 
-  async emit(pattern: string, payload: any) {
-    const res = await this.rmqService.emit(pattern, payload);
+  async emit(pattern: string, payload: any): Promise<void> {
+    await this.rmqService.emit(pattern, payload);
   }
 }

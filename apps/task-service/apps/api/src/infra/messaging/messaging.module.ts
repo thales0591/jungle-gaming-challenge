@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RmqService } from './rmq.service';
 import { EventPublisherAdapter } from './event-publisher-adapter';
 import { EventPublisher } from '@core/application/ports/event-publisher';
 
 @Module({
   imports: [
+    ConfigModule,
     ClientsModule.registerAsync([
       {
         name: 'RABBITMQ_CLIENT',
@@ -14,7 +15,7 @@ import { EventPublisher } from '@core/application/ports/event-publisher';
           transport: Transport.RMQ,
           options: {
             urls: [configService.getOrThrow<string>('RABBITMQ_URL')],
-            queue: configService.get<string>('RABBITMQ_NOTIFICATIONS_QUEUE'),
+            queue: configService.getOrThrow<string>('RABBITMQ_NOTIFICATIONS_QUEUE'),
             queueOptions: {
               durable: true,
             },

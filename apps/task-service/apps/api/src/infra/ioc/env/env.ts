@@ -8,6 +8,7 @@ export const envSchema = z.object({
   DB_HOST: z.string(),
   RABBITMQ_URL: z.string(),
   RABBITMQ_QUEUE: z.string(),
+  RABBITMQ_NOTIFICATIONS_QUEUE: z.string(),
   NODE_ENV: z.string(),
   PORT: z.coerce.number().default(3334)
 });

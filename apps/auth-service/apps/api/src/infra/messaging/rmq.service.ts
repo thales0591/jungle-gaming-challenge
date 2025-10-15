@@ -8,13 +8,15 @@ export class RmqService {
     private readonly client: ClientProxy,
   ) {}
 
-  async emit(pattern: string, payload: any) {
+  async onModuleInit() {
     await this.client.connect();
+  }
+
+  async emit(pattern: string, payload: any) {
     return this.client.emit(pattern, payload);
   }
 
   async send<TResult, TInput>(pattern: string, data: TInput) {
-    await this.client.connect();
     return this.client.send<TResult, TInput>(pattern, data);
   }
 }

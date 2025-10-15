@@ -50,11 +50,17 @@ export class CreateTaskCommentUseCase {
     await this.eventPublisher.emit('comment.new', {
       id: taskComment.id.toString(),
       taskId: taskComment.taskId.toString(),
-      authorId: taskComment.authorId.toString(),
+      taskTitle: task.title,
       content: taskComment.content,
-      createdAt: taskComment.createdAt,
+      user: {
+        id: user.id.value,
+        username: user.name,
+        email: user.email,
+      },
+      authorId: user.id.value,
       taskAuthorId: task.authorId.toString(),
-      taskAssignedUserIds: task.assignedUserIds.map(id => id.toString()),
+      assignedUserIds: richTask.assignedUsers.map((u) => u.id),
+      createdAt: taskComment.createdAt,
     });
 
     return {
