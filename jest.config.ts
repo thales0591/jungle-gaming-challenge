@@ -4,7 +4,7 @@ const config: Config = {
   projects: [
     '<rootDir>/apps/auth-service/@core/jest.config.ts',
     '<rootDir>/apps/task-service/@core/jest.config.ts',
-
+    '<rootDir>/apps/notifications-service/@core/jest.config.ts',
   ],
   coverageDirectory: '<rootDir>/coverage',
   collectCoverageFrom: [
