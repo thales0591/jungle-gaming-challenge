@@ -54,7 +54,7 @@ export class CreateTaskCommentUseCase {
       content: taskComment.content,
       user: {
         id: user.id.value,
-        username: user.name,
+        name: user.name,
         email: user.email,
       },
       authorId: user.id.value,
