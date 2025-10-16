@@ -63,16 +63,6 @@ export interface TaskComment {
   updatedAt: string;
 }
 
-export interface Notification {
-  id: string;
-  type: "task_created" | "task_updated" | "comment_new" | "task_assigned";
-  title: string;
-  message: string;
-  taskId?: string;
-  read: boolean;
-  createdAt: string;
-}
-
 export type TaskAuditAction =
   | "CREATED"
   | "UPDATED"

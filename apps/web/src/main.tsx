@@ -8,6 +8,7 @@ import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/react-query.ts";
+import { WebSocketProvider } from "./components/providers/websocket-provider";
 
 const router = createRouter({
   routeTree,
@@ -31,8 +32,10 @@ if (rootElement && !rootElement.innerHTML) {
     <StrictMode>
       <ThemeProvider defaultTheme="dark">
         <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <Toaster />
+          <WebSocketProvider>
+            <RouterProvider router={router} />
+            <Toaster />
+          </WebSocketProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </StrictMode>

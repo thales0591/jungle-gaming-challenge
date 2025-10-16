@@ -24,7 +24,7 @@ export function Header() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
-  const { notifications, markAsRead, markAllAsRead, deleteNotification } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
   const queryClient = useQueryClient();
 
@@ -85,9 +85,9 @@ export function Header() {
 
               <NotificationPanel
                 notifications={notifications}
+                unreadCount={unreadCount}
                 onMarkAsRead={markAsRead}
                 onMarkAllAsRead={markAllAsRead}
-                onDelete={deleteNotification}
               />
 
               <DropdownMenu>
