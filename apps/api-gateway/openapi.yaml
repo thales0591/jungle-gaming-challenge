@@ -1,0 +1,1082 @@
+openapi: 3.0.3
+info:
+  title: Jungle Gaming Challenge API
+  description: |
+    Complete API documentation for the Jungle Gaming Challenge microservices platform.
+
+    This API Gateway provides unified access to three downstream services:
+    - **Auth Service**: User authentication and management
+    - **Task Service**: Task management with comments and audit logs
+    - **Notifications Service**: User notifications system
+
+    ## Authentication
+    Most endpoints require authentication via JWT Bearer token OR `x-user-id` header.
+    Public endpoints are marked as such in their descriptions.
+  version: 1.0.0
+  contact:
+    name: API Support
+
+servers:
+  - url: http://localhost:4000/api
+    description: Local development server
+
+security:
+  - BearerAuth: []
+  - UserIdHeader: []
+
+tags:
+  - name: Authentication
+    description: User authentication endpoints (public)
+  - name: Users
+    description: User management endpoints
+  - name: Tasks
+    description: Task management operations
+  - name: Task Comments
+    description: Comment operations on tasks
+  - name: Notifications
+    description: User notification management
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user with email and password. Returns access and refresh tokens.
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: password123
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new user account with email, username and password.
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: newuser@example.com
+              username: johndoe
+              password: securepass123
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      description: Generate new access and refresh tokens using a valid refresh token.
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify JWT token
+      description: Validate a JWT token and return user information if valid.
+      operationId: verifyToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenDto'
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      description: Retrieve authenticated user information. Requires `x-user-id` header.
+      operationId: getMe
+      security:
+        - UserIdHeader: []
+      responses:
+        '200':
+          description: User information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /users/all:
+    get:
+      tags:
+        - Users
+      summary: Get all users
+      description: Retrieve a list of all registered users.
+      operationId: getAllUsers
+      security: []
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /task:
+    post:
+      tags:
+        - Tasks
+      summary: Create new task
+      description: Create a new task with title, description, priority, status and assigned users. Requires `x-user-id` header.
+      operationId: createTask
+      security:
+        - UserIdHeader: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+            example:
+              title: Implement user authentication
+              description: Add JWT-based authentication system
+              priority: HIGH
+              status: TODO
+              dueDate: '2025-12-31'
+              assignedUserIds:
+                - 550e8400-e29b-41d4-a716-446655440000
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    get:
+      tags:
+        - Tasks
+      summary: Get paginated tasks
+      description: Retrieve tasks with pagination, filtering and sorting options. Requires `x-user-id` header.
+      operationId: getPaginatedTasks
+      security:
+        - UserIdHeader: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (starts at 1)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+        - name: status
+          in: query
+          description: Filter by task status
+          schema:
+            $ref: '#/components/schemas/TaskStatus'
+        - name: priority
+          in: query
+          description: Filter by task priority
+          schema:
+            $ref: '#/components/schemas/TaskPriority'
+        - name: sortBy
+          in: query
+          description: Sort order for tasks
+          schema:
+            $ref: '#/components/schemas/TaskSortBy'
+      responses:
+        '200':
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskWithUsersResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /task/{id}:
+    get:
+      tags:
+        - Tasks
+      summary: Get task by ID
+      description: Retrieve detailed information about a specific task.
+      operationId: getTaskById
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskWithUsersResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    put:
+      tags:
+        - Tasks
+      summary: Update task
+      description: Update task details. All fields are optional.
+      operationId: updateTask
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+            example:
+              title: Updated task title
+              status: IN_PROGRESS
+              priority: URGENT
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    delete:
+      tags:
+        - Tasks
+      summary: Delete task
+      description: Permanently delete a task.
+      operationId: deleteTask
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Task deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /task/{id}/audit-logs:
+    get:
+      tags:
+        - Tasks
+      summary: Get task audit logs
+      description: Retrieve history of changes made to a task.
+      operationId: getTaskAuditLogs
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        '200':
+          description: Audit logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskAuditLogResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /task/{id}/comments:
+    post:
+      tags:
+        - Task Comments
+      summary: Create task comment
+      description: Add a comment to a task. Requires `x-user-id` header.
+      operationId: createTaskComment
+      security:
+        - UserIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskCommentRequest'
+            example:
+              content: This task needs more details about the authentication flow.
+      responses:
+        '201':
+          description: Comment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskCommentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+    get:
+      tags:
+        - Task Comments
+      summary: Get task comments
+      description: Retrieve paginated comments for a task.
+      operationId: getTaskComments
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Task UUID
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        '200':
+          description: Comments retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TaskCommentResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Get user notifications
+      description: Retrieve paginated notifications for the authenticated user. Requires `x-user-id` header.
+      operationId: getUserNotifications
+      security:
+        - UserIdHeader: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: size
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            minimum: 1
+            default: 10
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Get unread notification count
+      description: Get the number of unread notifications for the authenticated user. Requires `x-user-id` header.
+      operationId: getUnreadCount
+      security:
+        - UserIdHeader: []
+      responses:
+        '200':
+          description: Count retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: Number of unread notifications
+                    example: 5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /notifications/{id}/read:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      description: Mark a specific notification as read. Requires `x-user-id` header.
+      operationId: markNotificationAsRead
+      security:
+        - UserIdHeader: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Notification marked as read
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /notifications/read-all:
+    patch:
+      tags:
+        - Notifications
+      summary: Mark all notifications as read
+      description: Mark all notifications for the authenticated user as read. Requires `x-user-id` header.
+      operationId: markAllNotificationsAsRead
+      security:
+        - UserIdHeader: []
+      responses:
+        '204':
+          description: All notifications marked as read
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token authentication
+
+    UserIdHeader:
+      type: apiKey
+      in: header
+      name: x-user-id
+      description: User ID header for authentication (used by downstream services)
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          description: User password
+          example: password123
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        refreshToken:
+          type: string
+          description: JWT refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - username
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: newuser@example.com
+        username:
+          type: string
+          minLength: 3
+          maxLength: 30
+          description: Username (3-30 characters)
+          example: johndoe
+        password:
+          type: string
+          format: password
+          minLength: 6
+          description: Password (minimum 6 characters)
+          example: securepass123
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+          description: Valid refresh token
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    TokenDto:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: JWT token to verify
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: User name
+          example: John Doe
+        email:
+          type: string
+          format: email
+          description: User email
+          example: john@example.com
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: '2025-01-15T10:30:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-01-15T10:30:00Z'
+
+    CreateTaskRequest:
+      type: object
+      required:
+        - title
+        - description
+        - priority
+        - status
+        - assignedUserIds
+      properties:
+        title:
+          type: string
+          description: Task title
+          example: Implement user authentication
+        description:
+          type: string
+          description: Task description
+          example: Add JWT-based authentication system
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          description: Task due date (optional)
+          example: '2025-12-31'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assignedUserIds:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            format: uuid
+          description: Array of user IDs assigned to this task (minimum 1)
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        authorId:
+          type: string
+          format: uuid
+          description: Task author ID (optional)
+        title:
+          type: string
+          description: Task title (optional)
+        description:
+          type: string
+          description: Task description (optional)
+        dueDate:
+          type: string
+          format: date
+          nullable: true
+          description: Task due date (optional)
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assignedUserIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Array of user IDs (optional)
+
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        title:
+          type: string
+          example: Implement user authentication
+        description:
+          type: string
+          example: Add JWT-based authentication system
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-12-31T23:59:59Z'
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assignedUserIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+        createdAt:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:30:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:30:00Z'
+
+    TaskWithUsersResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/TaskPriority'
+        status:
+          $ref: '#/components/schemas/TaskStatus'
+        assignedUsers:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              email:
+                type: string
+                format: email
+        author:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TaskAuditLogResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        userName:
+          type: string
+        userEmail:
+          type: string
+          format: email
+        action:
+          type: string
+          description: Audit action performed
+          enum:
+            - CREATED
+            - UPDATED
+            - DELETED
+            - STATUS_CHANGED
+            - ASSIGNED
+            - UNASSIGNED
+        changes:
+          type: object
+          description: Object containing changed fields
+          additionalProperties: true
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    CreateTaskCommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          description: Comment content
+          example: This task needs more details about the authentication flow.
+
+    TaskCommentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        authorId:
+          type: string
+          format: uuid
+        authorName:
+          type: string
+          example: John Doe
+        authorEmail:
+          type: string
+          format: email
+          example: john@example.com
+        content:
+          type: string
+          example: This task needs more details.
+        createdAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    NotificationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        content:
+          type: string
+          example: You have been assigned to a new task
+        haveBeenRead:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    TaskStatus:
+      type: string
+      enum:
+        - TODO
+        - IN_PROGRESS
+        - REVIEW
+        - DONE
+      description: Task status
+      example: TODO
+
+    TaskPriority:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - URGENT
+      description: Task priority level
+      example: HIGH
+
+    TaskSortBy:
+      type: string
+      enum:
+        - newest
+        - oldest
+        - due-date
+        - priority
+      description: Sort order for task listing
+      example: newest
+
+    ErrorResponse:
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: Validation failed
+        error:
+          type: string
+          example: Bad Request
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 400
+            message: Validation failed
+            error: Bad Request
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 401
+            message: Unauthorized
+            error: Unauthorized
+
+    NotFound:
+      description: Not found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 404
+            message: Resource not found
+            error: Not Found
+
+    Conflict:
+      description: Conflict - Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 409
+            message: User already exists
+            error: Conflict
+
+    TooManyRequests:
+      description: Too many requests - Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            statusCode: 429
+            message: Too many requests
+            error: Too Many Requests
