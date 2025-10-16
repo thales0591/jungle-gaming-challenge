@@ -7,6 +7,7 @@ export const envSchema = z.object({
   JWT_TOKEN_EXPIRATION_SECONDS: z.coerce.number().default(900),
   AUTH_SERVICE_URL: z.string().default('http://localhost:3000/api'),
   TASKS_SERVICE_URL: z.string().default('http://localhost:3001/api'),
+  NOTIFICATIONS_SERVICE_URL: z.string().default('http://localhost:3335/api'),
 });
 
 export type Env = z.infer<typeof envSchema>;

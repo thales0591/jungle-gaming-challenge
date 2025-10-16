@@ -4,8 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { APP_GUARD } from '@nestjs/core';
 import { envSchema } from './env/env';
 import { GatewayController } from '../modules/gateway.controller';
-import { AuthProxyService } from '../modules/auth/auth-proxy.service';
-import { TasksProxyService } from '../modules/tasks/tasks-proxy.service';
+import { ProxyService } from '../modules/proxy/proxy.service';
 import { JwtStrategy } from '../middlewares/passport/jwt.strategy';
 import { JwtAuthGuard } from '../middlewares/passport/jwt.guard';
 
@@ -18,8 +17,7 @@ import { JwtAuthGuard } from '../middlewares/passport/jwt.guard';
     PassportModule.register({ defaultStrategy: 'jwt' }),
   ],
   providers: [
-    AuthProxyService,
-    TasksProxyService,
+    ProxyService,
     JwtStrategy,
     {
       provide: APP_GUARD,

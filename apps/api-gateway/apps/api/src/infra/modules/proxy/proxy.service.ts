@@ -1,30 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Request } from 'express';
 
 @Injectable()
-export class AuthProxyService {
-  private readonly logger = new Logger(AuthProxyService.name);
-  private readonly baseUrl: string;
+export class ProxyService {
+  private readonly logger = new Logger(ProxyService.name);
 
-  constructor(private readonly configService: ConfigService) {
-    this.baseUrl = this.configService.getOrThrow<string>('AUTH_SERVICE_URL');
-  }
-
-  async forward(req: Request) {
+  async forward(req: Request, targetServiceUrl: string) {
     const path = req.originalUrl.replace('/api', '').split('?')[0];
-    const url = `${this.baseUrl}${path}`;
+    const url = `${targetServiceUrl}${path}`;
 
     this.logger.log(`Forwarding ${req.method} ${url}`);
+
+    const headers: Record<string, any> = {
+      'Content-Type': 'application/json',
+    };
+
+    if (req.user) {
+      headers['x-user-id'] = req.user.userId;
+    }
 
     const response = await axios({
       method: req.method,
       url,
       data: req.body,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       params: req.query,
       validateStatus: () => true,
     });
