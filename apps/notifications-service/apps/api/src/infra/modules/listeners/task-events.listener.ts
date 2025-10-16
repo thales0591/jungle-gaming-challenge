@@ -65,13 +65,19 @@ export class TaskEventsListener {
       authorId: payload.authorId,
       assignedUserIds: payload.assignedUserIds,
       updatedAt: payload.updatedAt,
+      updatedBy: payload.updatedBy,
     };
 
     const usersToNotify = new Set<string>();
-    usersToNotify.add(payload.authorId);
-    payload.assignedUserIds?.forEach((userId: string) =>
-      usersToNotify.add(userId),
-    );
+    if (payload.authorId !== payload.updatedBy) {
+      usersToNotify.add(payload.authorId);
+    }
+
+    payload.assignedUserIds?.forEach((userId: string) => {
+      if (userId !== payload.updatedBy) {
+        usersToNotify.add(userId);
+      }
+    });
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
@@ -102,11 +108,16 @@ export class TaskEventsListener {
     };
 
     const usersToNotify = new Set<string>();
-    usersToNotify.add(payload.taskAuthorId);
-    usersToNotify.add(payload.authorId);
-    payload.assignedUserIds?.forEach((userId: string) =>
-      usersToNotify.add(userId),
-    );
+
+    if (payload.taskAuthorId !== payload.authorId) {
+      usersToNotify.add(payload.taskAuthorId);
+    }
+
+    payload.assignedUserIds?.forEach((userId: string) => {
+      if (userId !== payload.authorId) {
+        usersToNotify.add(userId);
+      }
+    });
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
