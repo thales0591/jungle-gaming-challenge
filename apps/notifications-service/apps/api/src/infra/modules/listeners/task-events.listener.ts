@@ -30,10 +30,11 @@ export class TaskEventsListener {
     };
 
     const usersToNotify = new Set<string>();
-    usersToNotify.add(payload.authorId);
-    payload.assignedUserIds?.forEach((userId: string) =>
-      usersToNotify.add(userId),
-    );
+    payload.assignedUserIds?.forEach((userId: string) => {
+      if (userId !== payload.authorId) {
+        usersToNotify.add(userId);
+      }
+    });
 
     const userIds = Array.from(usersToNotify);
     this.logger.log(`Notifying users: ${userIds.join(', ')}`);
