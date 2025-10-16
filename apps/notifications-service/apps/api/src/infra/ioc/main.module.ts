@@ -6,6 +6,7 @@ import { NotificationsModule } from '../modules/notifications/notifications.modu
 import { DatabaseModule } from './database/database.module';
 import { UseCasesModule } from './usecases/usecases.module';
 import { ListenersModule } from '../modules/listeners/listeners.module';
+import { AdaptersModule } from './adapters/adapters.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { ListenersModule } from '../modules/listeners/listeners.module';
     }),
     DatabaseModule,
     UseCasesModule,
+    AdaptersModule,
     NotificationsModule,
     ListenersModule,
   ],

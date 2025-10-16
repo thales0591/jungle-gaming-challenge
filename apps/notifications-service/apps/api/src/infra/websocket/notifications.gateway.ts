@@ -3,14 +3,11 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
-import * as jwt from 'jsonwebtoken';
-
-interface JwtPayload {
-  userId: string;
-}
+import { Server, Socket, RemoteSocket } from 'socket.io';
+import { TokenService } from '@core/domain/ports';
 
 @WebSocketGateway({
   cors: {
@@ -20,13 +17,24 @@ interface JwtPayload {
   },
 })
 export class NotificationsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   @WebSocketServer()
   server: Server;
 
   private readonly logger = new Logger(NotificationsGateway.name);
-  private readonly jwtSecret = process.env.JWT_SECRET || '';
+  private readonly TOKEN_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
+  private tokenCheckInterval: NodeJS.Timeout;
+
+  constructor(private readonly tokenService: TokenService) {}
+
+  afterInit() {
+    this.tokenCheckInterval = setInterval(() => {
+      this.validateAllConnections();
+    }, this.TOKEN_CHECK_INTERVAL);
+
+    this.logger.log('Gateway initialized with token validation');
+  }
 
   async handleConnection(client: Socket) {
     try {
@@ -38,14 +46,7 @@ export class NotificationsGateway
         return;
       }
 
-      if (!this.jwtSecret) {
-        this.logger.error('JWT_SECRET not configured');
-        client.disconnect();
-        return;
-      }
-
-      const decoded = jwt.verify(token, this.jwtSecret);
-      const payload = decoded as JwtPayload;
+      const payload = await this.tokenService.verify(token);
       const userId = payload.userId;
 
       if (!userId) {
@@ -55,8 +56,8 @@ export class NotificationsGateway
       }
 
       client.data.userId = userId;
+      client.data.token = token;
 
-      await client.join(userId);
       await client.join(userId);
 
       this.logger.log(`Client ${client.id} connected as user ${userId}`);
@@ -67,6 +68,48 @@ export class NotificationsGateway
         `Authentication failed for client ${client.id}: ${error.message}`,
       );
       client.disconnect();
+    }
+  }
+
+  private async validateAllConnections() {
+    const sockets = await this.server.fetchSockets();
+    this.logger.log(`Validating ${sockets.length} active connections...`);
+
+    for (const socket of sockets) {
+      await this.validateClientToken(socket);
+    }
+  }
+
+  private async validateClientToken(
+    client: RemoteSocket<any, any> | Socket,
+  ) {
+    const token = client.data.token as string;
+    const userId = client.data.userId as string;
+
+    if (!token) {
+      this.logger.warn(`Client ${client.id} has no token, disconnecting`);
+      this.server.to(client.id).disconnectSockets();
+      return;
+    }
+
+    try {
+      const payload = await this.tokenService.verify(token);
+
+      if (!payload || payload.userId !== userId) {
+        throw new Error('Token invalid or userId mismatch');
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Client ${client.id} (user: ${userId}) token expired or invalid, disconnecting`,
+      );
+
+      this.server.to(client.id).emit('token:expired', {
+        message: 'Your session has expired. Please reconnect.',
+      });
+
+      setTimeout(() => {
+        this.server.to(client.id).disconnectSockets();
+      }, 100);
     }
   }
 
