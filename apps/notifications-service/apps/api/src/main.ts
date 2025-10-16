@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { MainModule } from './infra/ioc/main.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { Transport } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 
@@ -23,6 +23,12 @@ async function bootstrap() {
   });
 
   await app.startAllMicroservices();
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+    }),
+  );
 
   const port = configService.getOrThrow<string>('PORT');
   await app.listen(port);
