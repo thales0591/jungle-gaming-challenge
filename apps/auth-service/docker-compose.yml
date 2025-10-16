@@ -13,9 +13,12 @@ services:
       - /usr/share/zoneinfo/America/Recife:/etc/localtime:ro
       - dbdata:/var/lib/postgresql/data
     restart: 'unless-stopped'
+    networks:
+      - challenge-network
 
   pgadmin:
     image: dpage/pgadmin4
+    container_name: pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
@@ -25,6 +28,13 @@ services:
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     restart: unless-stopped
+    networks:
+      - challenge-network
+
+networks:
+  challenge-network:
+    name: jungle-gaming-challenge_challenge-network
+    external: true
 
 volumes:
   dbdata:
