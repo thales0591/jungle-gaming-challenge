@@ -7,6 +7,7 @@ import { DatabaseModule } from './database/database.module';
 import { UseCasesModule } from './usecases/usecases.module';
 import { ListenersModule } from '../modules/listeners/listeners.module';
 import { AdaptersModule } from './adapters/adapters.module';
+import { HealthModule } from '../modules/health/health.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { AdaptersModule } from './adapters/adapters.module';
     AdaptersModule,
     NotificationsModule,
     ListenersModule,
+    HealthModule,
   ],
   providers: [NotificationsGateway],
 })

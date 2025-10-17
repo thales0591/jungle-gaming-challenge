@@ -8,6 +8,7 @@ import { GatewayController } from '../modules/gateway.controller';
 import { ProxyService } from '../modules/proxy/proxy.service';
 import { JwtStrategy } from '../middlewares/passport/jwt.strategy';
 import { JwtAuthGuard } from '../middlewares/passport/jwt.guard';
+import { HealthModule } from '../modules/health/health.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { JwtAuthGuard } from '../middlewares/passport/jwt.guard';
         limit: 10,
       },
     ]),
+    HealthModule,
   ],
   providers: [
     ProxyService,

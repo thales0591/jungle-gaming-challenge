@@ -6,6 +6,7 @@ import { MiddlewareModule } from '../middlewares/middlewate.module';
 import { TaskModule } from '../modules/task/task.module';
 import { UserListenerModule } from '../modules/user-listener/user-listener.module';
 import { TaskCommentModule } from '../modules/task-comment/task-comment.module';
+import { HealthModule } from '../modules/health/health.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { TaskCommentModule } from '../modules/task-comment/task-comment.module';
     TaskModule,
     TaskCommentModule,
     UserListenerModule,
+    HealthModule,
   ],
 })
 export class MainModule {}

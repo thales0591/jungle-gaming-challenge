@@ -6,6 +6,7 @@ import { MiddlewareModule } from '../middlewares/middlewate.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { RmqModule } from '../messaging/rmq.module';
 import { UsersModule } from '../modules/users/users.module';
+import { HealthModule } from '../modules/health/health.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { UsersModule } from '../modules/users/users.module';
     AuthModule,
     RmqModule,
     UsersModule,
+    HealthModule,
   ],
 })
 export class MainModule {}
