@@ -1,351 +1,317 @@
 # Jungle Gaming Challenge
 
-Sistema de microserviços desenvolvido com NestJS, TypeORM e RabbitMQ, seguindo os princípios de Clean Architecture e Domain-Driven Design (DDD).
+Sistema de gerenciamento de tarefas desenvolvido com arquitetura de microserviços, seguindo princípios de Clean Architecture e Domain-Driven Design (DDD).
 
 ## Visão Geral
 
-Este projeto implementa uma arquitetura de microserviços composta por:
-
-- **Auth Service**: Serviço de autenticação e gerenciamento de usuários
-- **Task Service**: Serviço de gerenciamento de tarefas
-- **RabbitMQ**: Sistema de mensageria para comunicação assíncrona entre serviços
+Aplicação completa para gerenciamento de tarefas com sistema de notificações em tempo real, autenticação JWT e comunicação assíncrona entre serviços.
 
 ## Arquitetura
 
-O projeto utiliza um monorepo gerenciado com **Turborepo** e **pnpm workspaces**, seguindo os seguintes padrões arquiteturais:
+```
+┌─────────────┐
+│   Web App   │ (React + Vite + TanStack Router)
+│  (Port 3000)│
+└──────┬──────┘
+       │ HTTP
+       ↓
+┌─────────────────┐
+│  API Gateway    │ (NestJS + Proxy + JWT Auth + Rate Limiting)
+│   (Port 4000)   │
+└────────┬────────┘
+         │
+    ┌────┴────────────────────────┐
+    │                             │
+    ↓                             ↓
+┌─────────────┐           ┌──────────────┐
+│Auth Service │           │ Task Service │
+│ (Port 3333) │           │  (Port 3334) │
+└──────┬──────┘           └───────┬──────┘
+       │                          │
+       ↓                          ↓
+┌─────────────┐           ┌──────────────┐
+│PostgreSQL   │           │ PostgreSQL   │
+│ (Port 5482) │           │  (Port 5483) │
+└─────────────┘           └──────────────┘
+       │                          │
+       └──────────┬───────────────┘
+                  ↓
+          ┌──────────────┐
+          │   RabbitMQ   │ (Message Broker)
+          │ (Port 5672)  │
+          └──────┬───────┘
+                 │
+                 ↓
+     ┌────────────────────┐
+     │Notifications Service│ (WebSocket Gateway)
+     │    (Port 3335)      │
+     └────────────────────┘
+                 │
+                 ↓
+          ┌─────────────┐
+          │ PostgreSQL  │
+          │ (Port 5484) │
+          └─────────────┘
+```
 
-- **Clean Architecture**: Separação clara entre camadas de domínio, aplicação e infraestrutura
-- **Domain-Driven Design**: Agregados, entidades e objetos de valor modelando o domínio
-- **Event-Driven Architecture**: Comunicação entre serviços via eventos (RabbitMQ)
-- **CQRS**: Separação de comandos e queries quando aplicável
-
-### Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 jungle-gaming-challenge/
 ├── apps/
-│   ├── auth-service/        # Serviço de autenticação
-│   │   ├── @core/           # Camada de domínio e aplicação
-│   │   └── apps/api/        # Camada de infraestrutura
-│   └── task-service/        # Serviço de tarefas
-│       ├── @core/           # Camada de domínio e aplicação
-│       └── apps/api/        # Camada de infraestrutura
+│   ├── auth-service/          # Microserviço de autenticação
+│   │   ├── @core/             # Domain + Use Cases
+│   │   │   ├── domain/        # Entities, Value Objects
+│   │   │   ├── application/   # Use Cases
+│   │   │   └── infra/         # TypeORM, Adapters
+│   │   └── apps/api/src/      # Infrastructure Layer
+│   │       └── infra/
+│   │           ├── modules/   # Controllers
+│   │           ├── ioc/       # DI Container
+│   │           └── messaging/ # RabbitMQ
+│   │
+│   ├── task-service/          # Microserviço de tarefas
+│   │   └── (mesma estrutura)
+│   │
+│   ├── notifications-service/ # Microserviço de notificações
+│   │   └── (mesma estrutura)
+│   │
+│   ├── api-gateway/          # Gateway principal
+│   │   └── apps/api/src/
+│   │       └── infra/
+│   │           ├── modules/
+│   │           │   ├── proxy/          # Proxy service
+│   │           │   ├── gateway.controller.ts
+│   │           │   └── health/         # Health checks
+│   │           ├── middlewares/
+│   │           │   └── passport/       # JWT Strategy
+│   │           └── decorators/
+│   │
+│   └── web/                   # Frontend React
+│       ├── src/
+│       │   ├── components/    # UI Components
+│       │   ├── pages/         # TanStack Router pages
+│       │   ├── services/      # API clients
+│       │   ├── hooks/         # Custom hooks
+│       │   └── lib/           # Utils, store, validations
+│       └── Dockerfile
+│
 ├── packages/
-│   ├── eslint-config/       # Configurações compartilhadas do ESLint
-│   ├── typescript-config/   # Configurações compartilhadas do TypeScript
-│   └── ui/                  # Componentes UI compartilhados (se aplicável)
-└── docker-compose.yml       # Configuração do RabbitMQ
+│   ├── eslint-config/        # Shared ESLint config
+│   ├── typescript-config/    # Shared tsconfig
+│   └── ui/                   # Shared UI components
+│
+└── docker-compose.yml        # Orchestration completa
 ```
 
-## Tecnologias
+## 🚀 Quick Start
 
-### Core
-- **Node.js** >= 18
-- **TypeScript** 5.9+
-- **NestJS** 11.x
-- **TypeORM** 0.3.x
-- **PostgreSQL** (banco de dados)
-- **RabbitMQ** (mensageria)
+### Opção 1: Docker Compose (Recomendado)
 
-### Autenticação & Segurança
-- **Passport** com JWT
-- **bcrypt** para hash de senhas
-
-### Validação & Transformação
-- **class-validator**
-- **class-transformer**
-- **Zod**
-
-### Ferramentas de Desenvolvimento
-- **Turborepo** (build system)
-- **pnpm** (gerenciador de pacotes)
-- **ESLint** & **Prettier** (qualidade de código)
-- **Jest** (testes)
-
-## Requisitos
-
-- Node.js >= 18
-- pnpm 9.0.0
-- Docker & Docker Compose (para RabbitMQ e PostgreSQL)
-
-## Instalação
-
-1. Clone o repositório:
 ```bash
+# Clone o repositório
 git clone <repository-url>
 cd jungle-gaming-challenge
-```
 
-2. Instale as dependências:
-```bash
+# Instale as dependências
 pnpm install
+
+# Suba todos os serviços
+docker compose up -d
+
+# Execute as migrations
+docker exec auth-service pnpm migration:run
+docker exec task-service pnpm migration:run
+docker exec notifications-service pnpm migration:run
+
+# Acesse a aplicação
+# Frontend: http://localhost:3000
+# API Gateway: http://localhost:4000/api
+# RabbitMQ Management: http://localhost:15672 (admin/admin)
 ```
 
-3. Configure as variáveis de ambiente:
+### Opção 2: Desenvolvimento Local
 
-**Auth Service** (`apps/auth-service/.env`):
+```bash
+# Instale as dependências
+pnpm install
+
+# Suba o RMQ a partir do root
+docker compose up -d rabbitmq
+
+# Suba a infraestrutura que cada serviço precisa (auth, task e notification precisam de DB) e suas migrations
+docker compose up -d
+pnpm run migration:run
+
+# Configure os .env de cada serviço criando um .env e usando o .env.example como base
+
+# Inicie os serviços backend em desenvolvimento
+pnpm run start:dev
+
+# Inicie o serviço web em desenvolvimento
+pnpm run dev
+```
+
+## Variáveis de Ambiente
+
+### Auth Service (`.env`)
 ```env
-# DB
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin
 POSTGRES_DB=auth-service
-DB_PORT=5482
-DB_HOST=localhost
+DB_PORT=5432
+DB_HOST=localhost  # ou postgres-auth no Docker
 
-# Mensageria
-RABBITMQ_URL=amqp://admin:admin@localhost:5672
-RABBITMQ_QUEUE=task_queue
+RABBITMQ_URL=amqp://admin:admin@localhost:5672  # ou @rabbitmq:5672 no Docker
+RABBITMQ_QUEUE=auth_queue
 
-# API
+PORT=3333
 NODE_ENV=development
-AUTH_SECRET="supersecret_access"
-AUTH_REFRESH_SECRET="supersecret_refresh"
-AUTH_ACCESS_EXPIRATION_SECONDS=900      # 15min
-AUTH_REFRESH_EXPIRATION_SECONDS=604800  # 7d
+AUTH_SECRET=supersecret_access
+AUTH_REFRESH_SECRET=supersecret_refresh
+AUTH_ACCESS_EXPIRATION_SECONDS=900
+AUTH_REFRESH_EXPIRATION_SECONDS=604800
 ```
 
-**Task Service** (`apps/task-service/.env`):
+### Task Service (`.env`)
 ```env
-# DB
 POSTGRES_USER=admin
 POSTGRES_PASSWORD=admin
 POSTGRES_DB=task-service
-DB_PORT=5483
-DB_HOST=localhost
+DB_PORT=5432
+DB_HOST=localhost  # ou postgres-task no Docker
 
-# Mensageria
 RABBITMQ_URL=amqp://admin:admin@localhost:5672
+RABBITMQ_QUEUE=auth_queue
+RABBITMQ_NOTIFICATIONS_QUEUE=notifications_queue
 
-# API
+PORT=3334
 NODE_ENV=development
-AUTH_SECRET="supersecret_access"
-AUTH_REFRESH_SECRET="supersecret_refresh"
-AUTH_ACCESS_EXPIRATION_SECONDS=900      # 15min
-AUTH_REFRESH_EXPIRATION_SECONDS=604800  # 7d
 ```
 
-4. Inicie o RabbitMQ:
-```bash
-docker-compose up -d
+### Notifications Service (`.env`)
+```env
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin
+POSTGRES_DB=notifications-service
+DB_PORT=5432
+DB_HOST=localhost  # ou postgres-notifications no Docker
+
+RABBITMQ_URL=amqp://admin:admin@localhost:5672
+RABBITMQ_NOTIFICATIONS_QUEUE=notifications_queue
+
+AUTH_SECRET=supersecret_access
+AUTH_REFRESH_SECRET=supersecret_refresh
+
+PORT=3335
+NODE_ENV=development
 ```
 
-5. Inicie os bancos de dados PostgreSQL para cada serviço:
-```bash
-# Auth Service
-cd apps/auth-service
-docker-compose up -d
-
-# Task Service
-cd apps/task-service
-docker-compose up -d
+### API Gateway (`.env`)
+```env
+PORT=4000
+NODE_ENV=development
+JWT_SECRET=supersecret_jwt
+JWT_TOKEN_EXPIRATION_SECONDS=900
+AUTH_SERVICE_URL=http://localhost:3333  # ou http://auth-service:3333 no Docker
+TASKS_SERVICE_URL=http://localhost:3334
+NOTIFICATIONS_SERVICE_URL=http://localhost:3335
 ```
 
-6. Execute as migrações do banco de dados:
-
-**Auth Service**:
-```bash
-cd apps/auth-service
-pnpm migration:run
-```
-
-**Task Service**:
-```bash
-cd apps/task-service
-pnpm migration:run
-```
-
-## Executando o Projeto
-
-### Desenvolvimento
-
-Execute todos os serviços em modo de desenvolvimento:
-```bash
-pnpm dev
-```
-
-Ou execute serviços individualmente:
-
-**Auth Service**:
-```bash
-cd apps/auth-service
-pnpm start:dev
-```
-
-**Task Service**:
-```bash
-cd apps/task-service
-pnpm start:dev
-```
-
-### Produção
-
-Build de todos os serviços:
-```bash
-pnpm build
-```
-
-Execute em modo de produção:
-```bash
-cd apps/auth-service
-pnpm start:prod
-
-cd apps/task-service
-pnpm start:prod
+### Web App (`.env`)
+```env
+VITE_API_URL=http://localhost:4000/api
 ```
 
 ## Scripts Disponíveis
 
-### Root (Turborepo)
+### Root (Monorepo)
 ```bash
-pnpm dev              # Inicia todos os serviços em modo desenvolvimento
-pnpm build            # Build de todos os serviços
-pnpm lint             # Lint em todos os serviços
-pnpm format           # Formata código com Prettier
-pnpm check-types      # Verifica tipos TypeScript
+pnpm test             # Executa todos os testes
+pnpm test:coverage    # Testes com coverage
 ```
 
-### Por Serviço (Auth/Task)
+### Por Serviço
 ```bash
-pnpm start:dev        # Modo desenvolvimento com watch
-pnpm start:debug      # Modo debug
-pnpm start:prod       # Modo produção
-pnpm build            # Build do serviço
-pnpm lint             # Lint do código
-pnpm format           # Formata código
+# Desenvolvimento
+pnpm start:dev        # Modo watch
+
+# Produção
+pnpm build
+pnpm start:prod
+
+# Migrations (apenas serviços NestJS)
+pnpm migration:create <nome>
+pnpm migration:generate <nome>
+pnpm migration:run
+pnpm migration:reset
 ```
 
-### Migrações TypeORM
-```bash
-pnpm migration:create <nome>    # Cria uma nova migration
-pnpm migration:generate <nome>  # Gera migration a partir das entities
-pnpm migration:run              # Executa migrations pendentes
-pnpm migration:reset            # Reverte última migration
-```
+## Decisões Técnicas
 
-## Comunicação entre Serviços
+### Clean Architecture
+- **Separação de camadas**: Domain, Application, Infrastructure
+- **Inversão de dependência**: Use cases dependem de interfaces
+- **Domain puro**: Sem dependências externas no domínio
+- **Trade-off**: Mais código boilerplate vs maior testabilidade
 
-O projeto utiliza **Event-Driven Architecture** com RabbitMQ para comunicação assíncrona:
+### Event-Driven com RabbitMQ
+- **Por quê?**: Desacoplamento entre serviços
+- **Trade-off**: Eventual consistency vs escalabilidade
+- **Uso**: Auth publica `user.created` → Task consome
 
-1. **Auth Service** publica eventos quando um usuário é criado (`user.created`)
-2. **Task Service** escuta esses eventos e atualiza seu contexto local
+### WebSocket para Notificações
+- **Socket.IO escolhido**: Mais maduro e fácil fallback
+- **Alternativa considerada**: Server-Sent Events (SSE)
 
-Exemplo de fluxo:
-```
-Auth Service (POST /users)
-  → Cria usuário no DB
-  → Publica evento "user.created" no RabbitMQ
-  → Task Service escuta evento
-  → Task Service cria representação local do usuário
-```
+## Problemas Conhecidos / Limitações
 
-## Padrões de Código
+Falta de observabilidade, estou estudando sobre o assunto no momento. 
+Sobre a parte de websocket, foi minha primeira vez aplicando então acho que devo ter feito configurações acopladas ou não tão bem feitas. Sobre o refresh token no front-end acho que ficou muito verboso, normalmente eu fazia com context api, acho que o fato de eu ter seguido com zustand me fez ter overengineering pra manter a revalidação do token durante a sessão.
+Sobre a parte de auth secret, acho que dava pra ter usado uma assimétrica pra não precisar compartilhar a privada entre todas.
+Sobre o User Read Model que tenho no task service, não sei se foi a melhor alternativa pensando na replicação dos dados e na inconsistência que isso pode causar.
 
-### Clean Architecture Layers
+## Tempo Gasto (10 corridos)
 
-```
-@core/
-├── domain/           # Entidades, Value Objects, Domain Services
-├── application/      # Use Cases, DTOs, Interfaces
-└── infra/           # TypeORM config, migrations
-
-apps/api/src/
-└── infra/
-    ├── modules/     # Controllers, NestJS Modules
-    ├── ioc/         # Dependency Injection
-    └── messaging/   # RabbitMQ producers/consumers
-```
-
-### Convenções
-
-- **Entidades**: Agregados raiz e entidades do domínio
-- **Value Objects**: Objetos imutáveis sem identidade
-- **Use Cases**: Um caso de uso por arquivo, responsabilidade única
-- **DTOs**: Validados com class-validator ou Zod
-- **Repositories**: Interfaces na aplicação, implementações na infra
+| Dia | Atividade | Tempo |
+|-----|-----------|-------|
+| 1 | Auth Service (domínio, use cases, controllers, JWT) | ~8h |
+| 2 | Task Service (domínio completo, relacionamentos) | ~8h |
+| 3 | API Gateway (proxy, rate limiting, JWT validation) | ~8h |
+| 4 | Notifications Service (WebSocket, RabbitMQ consumers) | ~8h |
+| 5 | Frontend - Parte 1 (setup, auth, routing) | ~8h |
+| 6 | Frontend - Parte 2 (tasks CRUD, UI/UX) | ~8h |
+| 7 | WebSocket integration + Notificações em tempo real | ~8h |
+| 8 | Testes unitários, Swagger, health checks, ajustes | ~8h |
+| 9 | Revisão | sem cálcuo aproximado |
+| 10 | Dockerização completa (docker-compose, Dockerfiles) | ~8h |
 
 ## Testes
 
 ```bash
-# Executar testes
+# Todos os testes
 pnpm test
 
-# Testes com coverage
-pnpm test:cov
+# Com coverage
+pnpm test:coverage
 
-# Testes em modo watch
-pnpm test:watch
-```
+# Por serviço
+pnpm test:auth          # Auth service only
+pnpm test:task          # Task service only
+pnpm test:notifications # Notifications service only
 
-## Troubleshooting
+### Coverage Atual
+- 91.42% levando em considerações partes testáveis (use cases + entities + value-objects)
 
-### RabbitMQ não conecta
-```bash
-# Verifique se o container está rodando
-docker ps
+## 📚 Documentação API
 
-# Acesse o management console
-http://localhost:15672
-# User: admin
-# Pass: admin
-```
+### Swagger/OpenAPI
+Acesse: `http://localhost:4000/api/docs`
 
-### Erro de migration
-```bash
-# Reverta a última migration
-pnpm migration:reset
+### Health Checks
+- Auth: `http://localhost:3333/health`
+- Task: `http://localhost:3334/health`
+- Notifications: `http://localhost:3335/health`
+- Gateway: `http://localhost:4000/api/health`
 
-# Execute novamente
-pnpm migration:run
-```
-
-### Porta em uso
-```bash
-# Verifique processos usando a porta
-lsof -i :3000
-lsof -i :5672
-
-# Mate o processo
-kill -9 <PID>
-```
-
-## Gerenciamento RabbitMQ
-
-Acesse o console de gerenciamento do RabbitMQ:
-- **URL**: http://localhost:15672
-- **User**: admin
-- **Password**: admin
-
-## Próximos Passos
-
-- [ ] Implementar testes unitários e de integração
-- [ ] Adicionar documentação Swagger/OpenAPI
-- [ ] Implementar rate limiting e throttling
-- [ ] Adicionar logs estruturados (Winston/Pino)
-- [ ] Configurar CI/CD pipeline
-- [ ] Implementar health checks
-- [ ] Adicionar métricas e monitoring (Prometheus)
-- [ ] Docker compose completo para ambiente de desenvolvimento
-
-## Contribuindo
-
-1. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
-2. Commit suas mudanças (`git commit -m 'feat: adiciona nova feature'`)
-3. Push para a branch (`git push origin feature/nova-feature`)
-4. Abra um Pull Request
-
-### Commit Convention
-Utilize [Conventional Commits](https://www.conventionalcommits.org/):
-- `feat:` nova funcionalidade
-- `fix:` correção de bug
-- `docs:` documentação
-- `refactor:` refatoração de código
-- `test:` adição ou correção de testes
-- `chore:` tarefas de manutenção
-
-## Licença
-
-UNLICENSED - Projeto privado
-
----
-
-Desenvolvido para o Jungle Gaming Challenge
+**Desenvolvido por Thales**
