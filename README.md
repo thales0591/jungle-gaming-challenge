@@ -284,7 +284,7 @@ Sobre o User Read Model que tenho no task service, não sei se foi a melhor alte
 | 7 | WebSocket integration + Notificações em tempo real | ~8h |
 | 8 | Testes unitários, Swagger, health checks, ajustes | ~8h |
 | 9 | Revisão | sem cálcuo aproximado |
-| 10 | Dockerização completa (docker-compose, Dockerfiles) | ~8h |
+| 10 | Dockerização (docker-compose, Dockerfiles) | ~2h |
 
 ## Testes
 
