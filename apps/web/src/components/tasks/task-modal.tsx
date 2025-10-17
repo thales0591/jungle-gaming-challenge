@@ -52,6 +52,7 @@ export function TaskModal({
   onSave,
 }: TaskModalProps) {
   const [date, setDate] = useState<Date>();
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const { toast } = useToast();
   const isEditing = !!task;
 
@@ -227,7 +228,7 @@ export function TaskModal({
           <div className="space-y-2">
             <Label>Prazo</Label>
             <div className="flex gap-2">
-              <Popover>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -252,6 +253,7 @@ export function TaskModal({
                         "dueDate",
                         newDate ? newDate.toISOString() : null
                       );
+                      setCalendarOpen(false);
                     }}
                     disabled={(date) => {
                       const today = new Date();
