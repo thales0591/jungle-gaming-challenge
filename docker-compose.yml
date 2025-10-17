@@ -1,22 +1,278 @@
+version: '3.8'
+
 services:
+  # Frontend React Application
+  web:
+    container_name: web
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+      target: development
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:4000/api
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    networks:
+      - challenge-network
+    depends_on:
+      - api-gateway
+
+  # API Gateway
+  api-gateway:
+    container_name: api-gateway
+    build:
+      context: .
+      dockerfile: ./apps/api-gateway/Dockerfile
+      target: development
+    ports:
+      - '4000:4000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/api-gateway/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      - JWT_SECRET=supersecret_jwt
+      - JWT_TOKEN_EXPIRATION_SECONDS=900
+      - AUTH_SERVICE_URL=http://auth-service:3333
+      - TASKS_SERVICE_URL=http://task-service:3334
+      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:3335
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      task-service:
+        condition: service_healthy
+      notifications-service:
+        condition: service_healthy
+    networks:
+      - challenge-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Auth Service
+  auth-service:
+    container_name: auth-service
+    build:
+      context: .
+      dockerfile: ./apps/auth-service/Dockerfile
+      target: development
+    ports:
+      - '3333:3333'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/auth-service/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3333
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=auth-service
+      - DB_PORT=5432
+      - DB_HOST=postgres-auth
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - RABBITMQ_QUEUE=auth_queue
+      - AUTH_SECRET=supersecret_access
+      - AUTH_REFRESH_SECRET=supersecret_refresh
+      - AUTH_ACCESS_EXPIRATION_SECONDS=900
+      - AUTH_REFRESH_EXPIRATION_SECONDS=604800
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - challenge-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Task Service
+  task-service:
+    container_name: task-service
+    build:
+      context: .
+      dockerfile: ./apps/task-service/Dockerfile
+      target: development
+    ports:
+      - '3334:3334'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/task-service/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3334
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=task-service
+      - DB_PORT=5432
+      - DB_HOST=postgres-task
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - RABBITMQ_QUEUE=auth_queue
+      - RABBITMQ_NOTIFICATIONS_QUEUE=notifications_queue
+    depends_on:
+      postgres-task:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - challenge-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3334/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Notifications Service
+  notifications-service:
+    container_name: notifications-service
+    build:
+      context: .
+      dockerfile: ./apps/notifications-service/Dockerfile
+      target: development
+    ports:
+      - '3335:3335'
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/apps/notifications-service/node_modules
+    environment:
+      - NODE_ENV=development
+      - PORT=3335
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=notifications-service
+      - DB_PORT=5432
+      - DB_HOST=postgres-notifications
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
+      - RABBITMQ_NOTIFICATIONS_QUEUE=notifications_queue
+      - AUTH_SECRET=supersecret_access
+      - AUTH_REFRESH_SECRET=supersecret_refresh
+    depends_on:
+      postgres-notifications:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - challenge-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3335/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # PostgreSQL for Auth Service
+  postgres-auth:
+    image: postgres:17-alpine
+    container_name: postgres-auth
+    restart: always
+    ports:
+      - '5482:5432'
+    networks:
+      - challenge-network
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: auth-service
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d auth-service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Task Service
+  postgres-task:
+    image: postgres:17-alpine
+    container_name: postgres-task
+    restart: always
+    ports:
+      - '5483:5432'
+    networks:
+      - challenge-network
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: task-service
+    volumes:
+      - postgres_task_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d task-service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL for Notifications Service
+  postgres-notifications:
+    image: postgres:17-alpine
+    container_name: postgres-notifications
+    restart: always
+    ports:
+      - '5484:5432'
+    networks:
+      - challenge-network
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: notifications-service
+    volumes:
+      - postgres_notifications_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d notifications-service"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
-    attach: false
     restart: always
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - '5672:5672'
+      - '15672:15672'
     networks:
       - challenge-network
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
-    volumes: ["rabbitmq_data:/var/lib/rabbitmq"]
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_auth_data:
+    driver: local
+  postgres_task_data:
+    driver: local
+  postgres_notifications_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
 
 networks:
   challenge-network:
     driver: bridge
-
-volumes:
-  rabbitmq_data:

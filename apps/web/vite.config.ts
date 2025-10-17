@@ -12,6 +12,11 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
+  server: {
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: true,
+  },
   // test: {
   //   globals: true,
   //   environment: 'jsdom',
