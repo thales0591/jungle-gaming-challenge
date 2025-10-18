@@ -3,14 +3,12 @@ import { Button } from './ui/button'
 
 export interface PaginationProps {
   pageIndex: number
-  perPage: number
   hasNextPage: boolean
   onPageChange: (pageIndex: number) => Promise<void> | void
 }
 
 export function Pagination({
   pageIndex,
-  perPage,
   hasNextPage,
   onPageChange,
 }: PaginationProps) {

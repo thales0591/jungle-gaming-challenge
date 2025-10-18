@@ -152,7 +152,6 @@ function TasksPage() {
 
               <Pagination
                 pageIndex={currentPage}
-                perPage={pageSize}
                 hasNextPage={hasNextPage!}
                 onPageChange={(newPage) => {
                   navigate({
