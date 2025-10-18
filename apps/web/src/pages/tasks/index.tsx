@@ -8,12 +8,15 @@ import { AlertCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchTasksRequest } from "@/services/tasks";
 import { TaskFilters } from "@/components/tasks/task-filters";
+import { Pagination } from "@/components/pagination";
 import { z } from "zod";
 
 const tasksSearchSchema = z.object({
   status: z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   sortBy: z.enum(["newest", "oldest", "due-date", "priority"]).optional(),
+  page: z.number().optional().default(1),
+  size: z.number().optional().default(6),
 });
 
 export const Route = createFileRoute("/tasks/")({
@@ -27,17 +30,35 @@ function TasksPage() {
   const search = useSearch({ from: "/tasks/" });
   const [isLoading, setIsLoading] = useState(false);
 
+  const currentPage = search.page || 1;
+  const pageSize = search.size || 6;
+
   const { data: tasksData } = useQuery({
-    queryKey: ["tasks", search.status, search.priority, search.sortBy],
+    queryKey: ["tasks", search.status, search.priority, search.sortBy, currentPage, pageSize],
     queryFn: () =>
       fetchTasksRequest({
-        page: 1,
-        size: 20,
+        page: currentPage,
+        size: pageSize,
         status: search.status,
         priority: search.priority,
         sortBy: search.sortBy,
       }),
   });
+
+  // Fazer uma query extra para verificar se existe próxima página
+  const { data: nextPageData } = useQuery({
+    queryKey: ["tasks-next", search.status, search.priority, search.sortBy, currentPage + 1, pageSize],
+    queryFn: () =>
+      fetchTasksRequest({
+        page: currentPage + 1,
+        size: pageSize,
+        status: search.status,
+        priority: search.priority,
+        sortBy: search.sortBy,
+      }),
+  });
+
+  const hasNextPage = nextPageData && nextPageData.length > 0;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -76,25 +97,25 @@ function TasksPage() {
             onStatusChange={(status) => {
               navigate({
                 to: "/tasks",
-                search: { ...search, status },
+                search: { ...search, status, page: 1 },
               });
             }}
             onPriorityChange={(priority) => {
               navigate({
                 to: "/tasks",
-                search: { ...search, priority },
+                search: { ...search, priority, page: 1 },
               });
             }}
             onSortByChange={(sortBy) => {
               navigate({
                 to: "/tasks",
-                search: { ...search, sortBy },
+                search: { ...search, sortBy, page: 1 },
               });
             }}
             onClearFilters={() => {
               navigate({
                 to: "/tasks",
-                search: {},
+                search: { page: 1, size: pageSize },
               });
             }}
           />
@@ -129,11 +150,17 @@ function TasksPage() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-center pt-4">
-                <p className="text-sm text-muted-foreground">
-                  Mostrando {tasksData?.length} de {tasksData?.length} tarefas
-                </p>
-              </div>
+              <Pagination
+                pageIndex={currentPage}
+                perPage={pageSize}
+                hasNextPage={hasNextPage!}
+                onPageChange={(newPage) => {
+                  navigate({
+                    to: "/tasks",
+                    search: { ...search, page: newPage },
+                  });
+                }}
+              />
             </>
           )}
         </div>
